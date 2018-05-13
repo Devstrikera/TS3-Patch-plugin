@@ -1,7 +1,7 @@
 #include <assert.h>
 #include <iostream>
 #include <cstring>
-#include "../include/process/process.h"
+#include "include/process/process.h"
 #include "include/process/pattern.h"
 
 using namespace std;

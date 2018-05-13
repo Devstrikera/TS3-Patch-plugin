@@ -1,6 +1,7 @@
-#include <include/hook/hook.h>
+#include "include/hook/hook.h"
+#include "include/hook/HookWindows.h"
+#include "include/plugin.h"
 #include <iostream>
-#include "../include/plugin.h"
 #include <thread>
 #include <deque>
 
@@ -98,8 +99,15 @@ int ts3plugin_init() {
 		this_thread::sleep_for(milliseconds(1000));
 		plugin::guiInitialized();
 	}).detach();
-	std::string error;
+	std::string error = "";
+
+#ifdef WIN32
+	hook::HookWindows64 hook;
+#else
 	hook::Linux64Hook hook;
+#endif
+	cout << "Client-Version: " << plugin::version() << endl;
+
 	auto flag = hook.available(error);
 	if(!flag) {
 		plugin::message("[]--------------- TS Patch ---------------[]", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);

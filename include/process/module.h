@@ -1,6 +1,11 @@
 #pragma once
 
 #include <string>
+#include <memory>
+
+#ifdef WIN32
+	#include <Windows.h>
+#endif
 
 namespace mem {
 	struct MemoryRegion {
@@ -8,6 +13,7 @@ namespace mem {
 		uintptr_t end;
 
 		// Permissions
+#ifndef WIN32
 		bool readable;
 		bool writable;
 		bool executable;
@@ -22,7 +28,10 @@ namespace mem {
 		std::string filename;
 
 		unsigned long client_start;
+#endif
 
 		inline size_t size() { return end - start; }
 	};
+
+	std::shared_ptr<MemoryRegion> info(const std::string& name);
 }

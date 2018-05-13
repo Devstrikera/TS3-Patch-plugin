@@ -2,8 +2,13 @@
 
 #include <memory>
 #include <deque>
-#include <zconf.h>
 #include "module.h"
+
+#ifdef WIN32
+
+#else
+	#include <zconf.h>
+#endif
 
 namespace process {
 	struct ProcessInfo {
@@ -28,6 +33,7 @@ namespace process {
 	};
 
 	std::shared_ptr<ProcessInfo> findByName(const std::string&);
+
 	std::shared_ptr<ProcessInfo> findById(pid_t);
 
 	inline pid_t ownId() { return getpid(); }

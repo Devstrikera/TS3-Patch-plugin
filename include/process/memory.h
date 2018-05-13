@@ -4,6 +4,9 @@
 #include <cstdint>
 #include <memory>
 
+#ifdef WIN32
+	#include <Windows.h>
+#endif
 namespace mem {
 	bool read(void* buffer, uintptr_t address, size_t length);
 	bool write(void* data, uintptr_t address, size_t length);

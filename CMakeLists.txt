@@ -1,19 +1,20 @@
 cmake_minimum_required(VERSION 3.9)
 project(plugin CXX ASM)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -nostdinc++ -std=c++11 -nodefaultlibs")
+
+ENABLE_LANGUAGE(ASM_MASM)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
-SET(ASM_OPTIONS "-x assembler-with-cpp")
-SET(CMAKE_ASM_FLAGS "${CFLAGS} ${ASM_OPTIONS}" )
+set(CMAKE_ASM_COMPILER "$ENV{VCInstallDir}Tools/MSVC/14.12.25827/bin/Hostx64/x64/ml64.exe") #/errorReport:none
+set(CMAKE_ASM_COMPILE_OBJECT "<CMAKE_ASM_COMPILER> <DEFINES> <INCLUDES> <FLAGS> /Fo <OBJECT> <SOURCE> /c /W2 /nologo")
 
-set(HEADERS
+set(SHARED_HEADERS
 		include/core.h
 		include/plugin.h
 
 		include/process/module.h
 		include/process/pattern.h
-		include/process/process.h
+#		include/process/process.h
 		include/process/file.h
 		include/process/memory.h
 
@@ -26,36 +27,61 @@ set(HEADERS
 		include/base64.h
 )
 
-set(SOURCE
+set(SHARED_SOURCE
 		src/core.cpp
 #		src/process/process.cpp
 		src/process/file.cpp
 		src/process/pattern.cpp
 		src/process/memory.cpp
-		src/hook/linux_x64.cpp
-		src/hook/jmp.S
+        src/process/module.cpp
+
+        src/hook/hook.cpp
 
 		src/wrapper/general.cpp
 		src/wrapper/PacketParser.cpp
 		src/wrapper/License.cpp
-
 		src/base64.cpp
 )
 
-include_directories(/usr/local/include/libcxx)
-
-find_package(Boost COMPONENTS system filesystem REQUIRED)
-
 include_directories(teamspeak)
-add_library(plugin SHARED ${HEADERS} ${SOURCE})
-#target_link_libraries(plugin libstdc++fs.a)
-target_link_libraries(plugin c++ c++abi m c gcc_s gcc )
-#target_link_libraries(plugin
-#		${Boost_FILESYSTEM_LIBRARY}
-#		${Boost_SYSTEM_LIBRARY}
-#)
+#SET(CMAKE_ASM_FLAGS "${CFLAGS} -x assembler-with-cpp")
+if(MSVC)
+    #We do a windows build!
 
-add_executable(MemoryTest test/MemoryTest.cpp test/jmp.S)
-target_link_libraries(MemoryTest plugin)
+        set(WINDOWS_SHARED_SOURCE
+                include/hook/HookWindows.h
+                src/hook/win/Hook.cpp
+                src/hook/win/jmp.S
+        )
 
-#Its important to use the libc library (TeamSpeak uses that as well!
+    add_library(plugin SHARED ${SHARED_HEADERS} ${SHARED_SOURCE} ${WINDOWS_SHARED_SOURCE})
+    target_link_libraries(plugin ws2_32)
+
+
+    add_executable(MemoryTest test/win/Main.cpp)
+    target_link_libraries(MemoryTest plugin)
+    add_custom_command(TARGET MemoryTest
+            PRE_BUILD
+            COMMAND "" /c /W2 /nologo /errorReport:none
+            /Fo${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/MemoryTest.dir/xxx.rsp
+            "${CMAKE_SOURCE_DIR}/src/hook/win/jmp.S"
+            COMMENT "Building asm file")
+    #target_sources(MemoryTest PUBLIC "xxx.rsp")
+else()
+    #Its important to use the libc library (TeamSpeak uses that as well!
+    #We run stuff for linux :D
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -nostdinc++ -std=c++11 -nodefaultlibs")
+
+        set(LINUX_SHARED_SOURCE
+                src/hook/linux/linux_x64.cpp
+                src/hook/linux/jmp.S
+        )
+
+    include_directories(/usr/local/include/libcxx)
+
+    add_library(plugin SHARED ${HEADERS} ${SOURCE} ${LINUX_SHARED_SOURCE})
+    target_link_libraries(plugin c++ c++abi m c gcc_s gcc )
+
+    add_executable(MemoryTest test/linux/MemoryTest.cpp test/linux/jmp.S)
+    target_link_libraries(MemoryTest plugin)
+endif()

@@ -1,9 +1,14 @@
 #include <cstring>
-#include <include/process/process.h>
-#include <sys/mman.h>
 #include <iostream>
-
+#include <Windows.h>
+#include <Psapi.h>
 #include "include/process/memory.h"
+
+#ifndef WIN32
+	#include <sys/mman.h>
+#else
+
+#endif
 
 using namespace std;
 bool mem::read(void *buffer, uintptr_t address, size_t length) {
@@ -15,6 +20,13 @@ bool mem::read(void *buffer, uintptr_t address, size_t length) {
 bool mem::write(void *data, uintptr_t address, size_t length) {
 	uintptr_t pageAddress = address;
 
+#ifdef WIN32
+	DWORD old;
+	if(!VirtualProtect((PBYTE) address, length, PAGE_EXECUTE_READWRITE, &old)) {
+		//TODO better error handling
+		cerr << "Could not change address access! (" << pageAddress << ")" << endl;
+	}
+#else
 	do {
 		pageAddress -= pageAddress % pageSize();
 		auto result = mprotect((void*) pageAddress, length, PROT_EXEC | PROT_READ | PROT_WRITE);
@@ -25,14 +37,17 @@ bool mem::write(void *data, uintptr_t address, size_t length) {
 		}
 		pageAddress += pageSize();
 	} while(pageAddress < address + length);
+#endif
 
 	memcpy((void*) address, data, length);
 	return true;
 }
 
-long mem::pageSize() {
-	return sysconf(_SC_PAGE_SIZE);
-}
+#ifndef WIN32
+	long mem::pageSize() {
+		return sysconf(_SC_PAGE_SIZE);
+	}
+#endif
 
 mem::CodeFragment::~CodeFragment()  {
 	if(old_fragment) free(old_fragment);
@@ -49,7 +64,12 @@ unique_ptr<mem::CodeFragment> mem::replace(uintptr_t address, void *new_code, si
 	if(!mem::read(result->old_fragment, address, fragment_length)) return nullptr;
 
 	memcpy(result->new_fragment, new_code, code_length);
-	memset(result->new_fragment + code_length, 0x90, fragment_length - code_length); //insert nop's
+	memset(reinterpret_cast<unsigned char*>(result->new_fragment) + code_length, (int) 0x90, (size_t) fragment_length - code_length); //insert nop's
+	cout << "Replacement: ";
+	for(int i = 0; i < fragment_length; i++)
+		cout << "0x" << hex << (uint32_t) (uint8_t) ((uint8_t*) result->new_fragment)[i] << " ";
+	cout << endl << "Code: " << code_length << " Nop: " << fragment_length - code_length << endl;
+	cout << "End addr: " << (void*) (address + fragment_length) << endl;
 	if(!mem::write(result->new_fragment, address, fragment_length)) return nullptr;
 
 	result->code_length = code_length;

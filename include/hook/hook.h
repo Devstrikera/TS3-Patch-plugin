@@ -1,14 +1,22 @@
 #pragma once
 
-#include "include/wrapper/License.h"
+
+#ifdef WIN32
+	#include <winsock2.h>
+	#include <Windows.h>
+	#include <WinInet.h>
+	#include <WS2tcpip.h>
+#endif
 #include <string>
-#include <netdb.h>
-#include <arpa/inet.h>
-#include <include/process/memory.h>
+
+//Also includes windows.h
+#include "include/process/memory.h"
+#include "include/wrapper/License.h"
 
 namespace hook {
 	class Hook {
 		public:
+
 			virtual std::string name() const = 0;
 			/**
 			 * @return true if hooking is available
@@ -21,26 +29,14 @@ namespace hook {
 
 			virtual bool hook(std::string&) = 0;
 			virtual bool unhook(std::string&) = 0;
-	};
 
-	class Linux64Hook : public Hook {
-		public:
-			std::string name() const override;
-			bool available(std::string &string) override;
-			bool initializeHook(std::string &string) override;
-			bool hook(std::string&) override;
-			bool unhook(std::string&) override;
-
-		private:
-			static uint64_t getPublicKeyPtr();
-			static int injected(void* builder);
-			static int getaddrinfo(const char *name, const char *service, const struct addrinfo *req, struct addrinfo **pai);
-
-			std::unique_ptr<mem::CodeFragment> hook_getaddrinfo;
-			std::unique_ptr<mem::CodeFragment> hook_getStaticLicense;
-			std::unique_ptr<mem::CodeFragment> hook_cmd_clientinitivexpand2;
+		protected:
+			std::unique_ptr<mem::CodeFragment> make_jmp(uintptr_t address, uintptr_t jmp_target, size_t length, bool use_call = true);
 
 			static thread_local std::unique_ptr<wrapper::StaticLicense> costume_license;
 			static thread_local uintptr_t costume_license_ptr;
+		public:
+			static uintptr_t getPublicKeyPtr();
+			static int getaddrinfo(const char *name, const char *service, const addrinfo *req, addrinfo **pai);
 	};
 }

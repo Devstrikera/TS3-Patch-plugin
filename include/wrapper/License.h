@@ -1,7 +1,12 @@
 #pragma once
 
 #include <cstdint>
-#include <zconf.h>
+
+#ifdef WIN32
+	#include <Windows.h>
+#else
+    #include <zconf.h>
+#endif
 
 namespace wrapper {
 	/**

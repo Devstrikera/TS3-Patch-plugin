@@ -1,3 +1,5 @@
+# This is GAS/AT&T!
+# mov <src>,<dest>
 .data
 .globl _hook_linux_x64_getStaticLicense_target
 _hook_linux_x64_getStaticLicense_target:

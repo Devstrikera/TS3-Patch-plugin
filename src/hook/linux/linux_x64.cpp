@@ -9,8 +9,6 @@
 using namespace std;
 using namespace hook;
 using namespace wrapper;
-std::unique_ptr<wrapper::StaticLicense> thread_local Linux64Hook::costume_license;
-uintptr_t thread_local Linux64Hook::costume_license_ptr;
 
 std::string Linux64Hook::name() const {
 	return "Linux x64";
@@ -48,25 +46,6 @@ extern uintptr_t _hook_linux_x64_injected;
 extern uintptr_t _hook_linux_x64_getaddrinfo_target;
 extern uintptr_t _hook_linux_x64_getaddrinfo;
 
-inline std::unique_ptr<mem::CodeFragment> make_jmp(uintptr_t address, uintptr_t jmp_target, size_t length, bool call = true) {
-	u_char buffer[12] = {
-			0x48, 0xb8,                             //movabs %rax, $address
-                     (jmp_target >>  0) & 0xFF,
-                     (jmp_target >>  8) & 0xFF,
-                     (jmp_target >> 16) & 0xFF,
-                     (jmp_target >> 24) & 0xFF,
-                     (jmp_target >> 32) & 0xFF,
-                     (jmp_target >> 40) & 0xFF,
-                     (jmp_target >> 48) & 0xFF,
-                     (jmp_target >> 56) & 0xFF,
-
-			//0xff, 0xe0,                           //jmp %rax
-			//0xff, 0xd0,                           //call %rax
-			0xff, call ? (u_char) 0xd0 : (u_char) 0xe0,
-	};
-	return mem::replace(address, buffer, 12, length);
-}
-
 bool Linux64Hook::hook(std::string& error) {
 	_hook_linux_x64_getStaticLicense_target = (uintptr_t) &Linux64Hook::getPublicKeyPtr;
 	this->hook_getStaticLicense = make_jmp(0xFDD4B0, (uintptr_t) &_hook_linux_x64_getStaticLicense, 12, false);
@@ -88,15 +67,6 @@ bool Linux64Hook::hook(std::string& error) {
 
 bool Linux64Hook::unhook(std::string& error) {
 	return false;
-}
-
-uint64_t Linux64Hook::getPublicKeyPtr() {
-	cout << "Got hooked request! Thread: " << pthread_self() << endl;
-	if(costume_license && costume_license_ptr > 0) {
-		cout << "Using costume license! (" << costume_license_ptr << ")" << endl;
-		return (uint64_t) &costume_license_ptr;
-	}
-	return (uintptr_t) &wrapper::static_license_root;
 }
 
 int Linux64Hook::injected(void* builder) {
