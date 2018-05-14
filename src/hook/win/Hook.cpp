@@ -40,8 +40,9 @@ std::string HookWindows64::name() const {
 }
 
 bool HookWindows64::available(std::string &error) {
-	if(plugin::version().find("3.1.9") != std::string::npos) {
-		error = "Only available for 3.1.9";
+	if(plugin::version().find("3.1.9") == std::string::npos &&
+	   plugin::version().find("3.1.8") == std::string::npos) {
+		error = "Only available for 3.1.9, 3.1.8";
 		return false;
 	}
 	return true;
@@ -101,7 +102,7 @@ if(!variable) { \
 #define STATICLICENSE1_MASK "xxxx?xxx????xxxx????xxxx????xxxx????xxxx????"
 
 bool HookWindows64::hook(std::string& error) {
-	_hook_windows_x64_getaddrinfo_target = reinterpret_cast<uintptr_t>(&Hook::getaddrinfo);
+	_hook_windows_x64_getaddrinfo_target = reinterpret_cast<uintptr_t>(&HookWindows64::getaddrinfo);
 	_hook_windows_x64_injected_target = reinterpret_cast<uintptr_t>(&HookWindows64::injected);
 	_hook_windows_x64_getlicenseroot_target = reinterpret_cast<uintptr_t>(&Hook::getPublicKeyPtr);
 	_hook_windows_x64_dns_send_target = reinterpret_cast<uintptr_t>(&HookWindows64::dns_send);

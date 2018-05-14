@@ -9,7 +9,7 @@ TeamSpeak 3 patcher is a TeamSpeak 3 plugin which allows you to disable the Team
 | Client version | Linux x64 | Windows x64 | Linux x32 | Windows x32 | Mac OS<sup id="a1">[1](#Mac-OS)</sup> (x64) |
 | --- | --- | --- | --- | --- | --- |
 | 3.1.9 | :heavy_check_mark: | :heavy_check_mark: | :heavy_multiplication_x: | :heavy_multiplication_x: | :heavy_multiplication_x: |
-| 3.1.8 | :heavy_multiplication_x: | :heavy_multiplication_x: | :heavy_multiplication_x: | :heavy_multiplication_x: | :heavy_multiplication_x: |
+| 3.1.8 | :heavy_multiplication_x: | :heavy_check_mark: | :heavy_multiplication_x: | :heavy_multiplication_x: | :heavy_multiplication_x: |
 | 3.1.7 | :heavy_multiplication_x: | :heavy_multiplication_x: | :heavy_multiplication_x: | :heavy_multiplication_x: | :heavy_multiplication_x: |
 | 3.1.6 | :heavy_multiplication_x: | :heavy_multiplication_x: | :heavy_multiplication_x: | :heavy_multiplication_x: | :heavy_multiplication_x: |
 
