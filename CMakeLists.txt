@@ -18,7 +18,7 @@ set(SHARED_HEADERS
 		include/process/file.h
 		include/process/memory.h
 
-		include/hook/hook.h
+        include/hook/Hook.h
 
 		include/wrapper/general.h
 		include/wrapper/License.h
@@ -35,7 +35,7 @@ set(SHARED_SOURCE
 		src/process/memory.cpp
         src/process/module.cpp
 
-        src/hook/hook.cpp
+        src/hook/Hook.cpp
 
 		src/wrapper/general.cpp
 		src/wrapper/PacketParser.cpp

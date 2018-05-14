@@ -1,5 +1,5 @@
 #include <include/process/memory.h>
-#include "include/hook/hook.h"
+#include "include/hook/Hook.h"
 #include "include/wrapper/ParameterParser.h"
 
 #include <include/base64.h>

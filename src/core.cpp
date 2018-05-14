@@ -1,15 +1,19 @@
-#include "include/hook/hook.h"
+#include "include/hook/Hook.h"
+#include "include/core.h"
 #include "include/hook/HookWindows.h"
 #include "include/plugin.h"
 #include <iostream>
 #include <thread>
 #include <deque>
 
+#define PLUGIN_NAME "TS Patch"
+
 using namespace std;
 using namespace std::chrono;
 
 std::string pluginId;
 struct TS3Functions functions{};
+hook::Hook* instance_hook = nullptr;
 
 namespace plugin {
 	struct QueuedMessage {
@@ -27,18 +31,59 @@ namespace plugin {
 		return ::functions;
 	}
 
-	std::string version() {
-		char* result = nullptr;
-		functions().getClientLibVersion(&result);
-		string res = result;
-		functions().freeMemory(result);
-		return res;
+	hook::Hook* hook() {
+		return instance_hook;
 	}
 
-	uint64 versionNumber() {
-		uint64 number;
-		functions().getClientLibVersionNumber(&number);
-		return number;
+	namespace api {
+		std::tuple<int, int, int> version_mmp() {
+			std::tuple<int, int, int> response;
+
+			auto full_version = version();
+			//Trim
+			while(full_version.length() > 0 && full_version.front() == ' ') full_version = full_version.substr(1);
+			while(full_version.length() > 0 && full_version.back() == ' ') 	full_version = full_version.substr(0, full_version.length() - 1);
+
+			auto mmp_index = full_version.find(' ');
+			if(mmp_index == string::npos) return response;
+
+			auto mmp_str = full_version.substr(0, mmp_index);
+			auto time_str = full_version.substr(mmp_index + 1);
+
+			//Parse mmp (major minor patch)
+			{
+				auto major_index = mmp_str.find('.');
+				auto minor_index = mmp_str.find('.', major_index + 1);
+				if(major_index == string::npos || minor_index == string::npos) return response;
+
+				try {
+					auto major = stoi(mmp_str.substr(0, major_index));
+					auto minor = stoi(mmp_str.substr(major_index + 1, minor_index));
+					auto patch = stoi(mmp_str.substr(minor_index + 1));
+					response = make_tuple(major, minor, patch);
+				} catch (std::exception& ex) {
+					cerr << "failed to parse version (" << ex.what() << ")" << endl;
+					return response;
+				}
+			}
+
+			return response;
+		};
+
+		std::string version() {
+			char* result = nullptr;
+			::plugin::functions().getClientLibVersion(&result);
+			string res = result;
+			::plugin::functions().freeMemory(result);
+			return res;
+		}
+
+
+		uint64 versionNumber() {
+			uint64 number;
+			::plugin::functions().getClientLibVersionNumber(&number);
+			return number;
+		}
 	}
 
 	void message(const std::string& message, PluginMessageTarget target, bool chat) {
@@ -51,7 +96,8 @@ namespace plugin {
 			cout << message << endl;
 	}
 
-	void message(const std::string& message, PluginMessageTarget target) {
+	void message(std::string message, PluginMessageTarget target) {
+		message = "[" + string(PLUGIN_NAME) + "] " + message;
 		plugin::message(message, target, true);
 	}
 
@@ -75,11 +121,11 @@ void ts3plugin_registerPluginID(const char* id) {
 }
 
 const char* ts3plugin_name() {
-	return "License Patch";
+	return PLUGIN_NAME;
 }
 
 const char* ts3plugin_version() {
-	return "0.0.1-alpha";
+	return "0.0.2-alpha";
 }
 
 int ts3plugin_apiVersion() {
@@ -99,49 +145,60 @@ int ts3plugin_init() {
 		this_thread::sleep_for(milliseconds(1000));
 		plugin::guiInitialized();
 	}).detach();
-	std::string error = "";
 
+	auto version = plugin::api::version_mmp();
+	if(get<0>(version) < 2) {
+		cerr << "Invalid clientlib version!" << endl;
+		plugin::message("Invalid clientlib version!", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
+		plugin::message("Dont initialize TS Patch", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
+		return 1;
+	}
+	cout << "Client-Version: " << plugin::api::version() << " (Major: " << get<0>(version) << " Minor: " << get<1>(version) << " Patch: " << get<2>(version) << ")" << endl;
+	plugin::message("Loading hook (async)", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
+
+	thread([](){
+		std::string error;
 #ifdef WIN32
-	hook::HookWindows64 hook;
+		instance_hook = new hook::HookWindows64();
 #else
-	hook::Linux64Hook hook;
+		instance_hook = new hook::Linux64Hook();
 #endif
-	cout << "Client-Version: " << plugin::version() << endl;
 
-	auto flag = hook.available(error);
-	if(!flag) {
-		plugin::message("[]--------------- TS Patch ---------------[]", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
-		plugin::message("Could not inject! (No hook available)", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
-		plugin::message("[]--------------- TS Patch ---------------[]", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
-		return 1;
-	}
+		auto flag = instance_hook->available(error);
+		if(!flag) {
+			plugin::message("[]--------------- " PLUGIN_NAME " ---------------[]", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
+			plugin::message("Could not inject! (No hook available)", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
+			plugin::message("[]--------------- " PLUGIN_NAME " ---------------[]", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
+			return;
+		}
 
-	flag = hook.initializeHook(error);
-	if(!flag) {
-		plugin::message("[]--------------- TS Patch ---------------[]", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
-		plugin::message("Hook " + hook.name() + " could not be initialized", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
-		plugin::message("Reason: " + error, PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
-		plugin::message("[]--------------- TS Patch ---------------[]", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
-		return 1;
-	}
+		flag = instance_hook->initializeHook(error);
+		if(!flag) {
+			plugin::message("[]--------------- " PLUGIN_NAME " ---------------[]", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
+			plugin::message("Hook " + instance_hook->name() + " could not be initialized", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
+			plugin::message("Reason: " + error, PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
+			plugin::message("[]--------------- " PLUGIN_NAME " ---------------[]", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
+			return;
+		}
 
-	flag = hook.hook(error);
-	if(!flag) {
-		plugin::message("[]--------------- TS Patch ---------------[]", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
-		plugin::message("Hook " + hook.name() + " could not injected", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
-		plugin::message("Reason: " + error, PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
-		plugin::message("[]--------------- TS Patch ---------------[]", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
-		return 1;
-	}
+		flag = instance_hook->hook(error);
+		if(!flag) {
+			plugin::message("[]--------------- " PLUGIN_NAME " ---------------[]", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
+			plugin::message("Hook " + instance_hook->name() + " could not injected", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
+			plugin::message("Reason: " + error, PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
+			plugin::message("[]--------------- " PLUGIN_NAME " ---------------[]", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
+			return;
+		}
 
-	plugin::message("[]--------------- TS Patch ---------------[]", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
-	plugin::message("TeamSpeak 3 patch successfully injected!", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
-	plugin::message("Features:", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
-	plugin::message("  - Blacklist bypass", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
-	plugin::message("  - Cracked 3.1 server join", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
-	plugin::message(" ", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
-	plugin::message("Plugin by WolverinDEV", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
-	plugin::message("[]--------------- TS Patch ---------------[]", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
+		plugin::message("[]--------------- " PLUGIN_NAME " ---------------[]", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
+		plugin::message("TeamSpeak 3 patch successfully injected!", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
+		plugin::message("Features:", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
+		plugin::message("  - Blacklist bypass", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
+		plugin::message("  - Cracked 3.1 server join", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
+		plugin::message(" ", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
+		plugin::message("Plugin by WolverinDEV", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
+		plugin::message("[]--------------- " PLUGIN_NAME " ---------------[]", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
+	}).detach();
 	return 0;
 }
 

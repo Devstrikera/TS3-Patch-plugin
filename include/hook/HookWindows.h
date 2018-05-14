@@ -1,6 +1,6 @@
 #pragma once
 
-#include "hook.h"
+#include "Hook.h"
 
 #ifdef ENV32
 	#define MODULE_NAME ("ts3client_win32.exe")
@@ -28,7 +28,5 @@ namespace hook {
 		public:
 			static void injected(void* builder);
 			static int dns_send(SOCKET s, const char * buf, int len, int flags);
-
-			static int getaddrinfo(const char *name, const char *service, const addrinfo *req, addrinfo **pai);
 	};
 }

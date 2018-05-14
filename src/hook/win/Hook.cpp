@@ -4,7 +4,7 @@
 #include <thread>
 #include "include/core.h"
 #include "include/hook/HookWindows.h"
-#include "include/hook/hook.h"
+#include "include/hook/Hook.h"
 #include "include/process/module.h"
 #include "include/process/pattern.h"
 #include "include/wrapper/ParameterParser.h"
@@ -15,20 +15,23 @@ using namespace hook;
 using namespace wrapper;
 
 extern "C" {
-	extern uintptr_t _hook_windows_x64_getaddrinfo_target;
 	extern uintptr_t _hook_windows_x64_getaddrinfo;
+	extern uintptr_t _hook_windows_x64_getaddrinfo_target;
 	extern uintptr_t _hook_windows_x64_getaddrinfo_jump;
 
 	extern uintptr_t _hook_windows_x64_injected_target;
 	extern uintptr_t _hook_windows_x64_injected;
 	extern uintptr_t _hook_windows_x64_injected_jump;
 
-	extern uintptr_t _hook_windows_x64_getlicenseroot_target;
-	extern uintptr_t _hook_windows_x64_getlicenseroot;
-	extern uintptr_t _hook_windows_x64_getlicenseroot_jump;
 
-	extern uintptr_t _hook_windows_x64_getlicenseroot1;
-	extern uintptr_t _hook_windows_x64_getlicenseroot1_jump;
+	extern uintptr_t _hook_windows_x64_getlicenseroot_1_316;
+	extern uintptr_t _hook_windows_x64_getlicenseroot_2_316;
+	extern uintptr_t _hook_windows_x64_getlicenseroot_1_317;
+	extern uintptr_t _hook_windows_x64_getlicenseroot_2_317;
+
+	extern uintptr_t _hook_windows_x64_getlicenseroot_target;
+	extern uintptr_t _hook_windows_x64_getlicenseroot_1_jump;
+	extern uintptr_t _hook_windows_x64_getlicenseroot_2_jump;
 
 	extern uintptr_t _hook_windows_x64_dns_send;
 	extern uintptr_t _hook_windows_x64_dns_send_target;
@@ -40,9 +43,9 @@ std::string HookWindows64::name() const {
 }
 
 bool HookWindows64::available(std::string &error) {
-	if(plugin::version().find("3.1.9") == std::string::npos &&
-	   plugin::version().find("3.1.8") == std::string::npos) {
-		error = "Only available for 3.1.9, 3.1.8";
+	auto version = plugin::api::version_mmp();
+	if(get<1>(version) != 1 || get<2>(version) < 6) {
+		error = "Only available for >= 3.1.6";
 		return false;
 	}
 	return true;
@@ -89,20 +92,42 @@ if(!variable) { \
 	return false; \
 }
 
-#define GETADDRINFO_SIGN "\x4C\x8D\x4C\x24\x00\x4C\x8D\x45\x8F\x33\xD2\xFF\x15\x00\x00\x00\x00\x85\xC0\x0F\x85\x00\x00\x00\x00\x48\x8B\x44\x24\x00\x8B\x48\x04\x83\xF9\x17\x75\x05\x8D\x79\xEA\xEB\x0C"
-#define GETADDRINFO_MASK "xxxx?xxxxxxxx????xxxx????xxxx?xxxxxxxxxxxxx"
+
+#define GETADDRINFO_SIGN "\x4C\x8D\x8E\x00\x00\x00\x00\x4C\x8D\x46\x48\x48\x8B\xD7\x48\x8B\xCB\xFF\x15\x00\x00\x00\x00\x8B\xD0\x48\x8D\x4C\x24\x00\xE8\x00\x00\x00\x00"
+#define GETADDRINFO_MASK "xxx????xxxxxxxxxxxx????xxxxxx?x????"
 
 #define INJECTED_SIGN "\x74\x49\x48\x8D\x8C\x24\x00\x00\x00\x00\xE8\x00\x00\x00\x00\x90\x48\x8D\x8C\x24\x00\x00\x00\x00\xE8\x00\x00\x00\x00\x90\x48\x8D\x8C\x24\x00\x00\x00\x00\xE8\x00\x00\x00\x00\x90\x48\x8D\x8C\x24\x00\x00\x00\x00\xE8\x00\x00\x00\x00\x90\x48\x8D\x4C\x24\x00\xE8\x00\x00\x00\x00\x8B\xC3"
 #define INJECTED_MASK "xxxxxx????x????xxxxx????x????xxxxx????x????xxxxx????x????xxxxx?x????xx"
 
-#define STATICLICENSE_SIGN "\x4D\x2B\xC8\x48\x89\xBC\x24\x00\x00\x00\x00\x48\x8B\x15\x00\x00\x00\x00\x48\x8D\x8C\x24\x00\x00\x00\x00\xE8\x00\x00\x00\x00\x8B\xD8\x85\xC0\x0F\x84\x00\x00\x00\x00"
-#define STATICLICENSE_MASK "xxxxxxx????xxx????xxxx????x????xxxxxx????"
+#define STATICLICENSE_1_SIGN_317 "\x4D\x2B\xC8\x48\x89\xBC\x24\x00\x00\x00\x00\x48\x8B\x15\x00\x00\x00\x00\x48\x8D\x8C\x24\x00\x00\x00\x00\xE8\x00\x00\x00\x00\x8B\xD8\x85\xC0\x0F\x84\x00\x00\x00\x00"
+#define STATICLICENSE_1_MASK_317 "xxxxxxx????xxx????xxxx????x????xxxxxx????"
 
-#define STATICLICENSE1_SIGN "\x4C\x8D\x44\x24\x00\x48\x8B\x15\x00\x00\x00\x00\x48\x8B\x9C\x24\x00\x00\x00\x00\x48\x8B\xCB\xE8\x00\x00\x00\x00\x85\xC0\x0F\x85\x00\x00\x00\x00\x48\x8B\x84\x24\x00\x00\x00\x00"
-#define STATICLICENSE1_MASK "xxxx?xxx????xxxx????xxxx????xxxx????xxxx????"
+#define STATICLICENSE_2_SIGN_317 "\x4C\x8D\x44\x24\x00\x48\x8B\x15\x00\x00\x00\x00\x48\x8B\x9C\x24\x00\x00\x00\x00\x48\x8B\xCB\xE8\x00\x00\x00\x00\x85\xC0\x0F\x85\x00\x00\x00\x00\x48\x8B\x84\x24\x00\x00\x00\x00"
+#define STATICLICENSE_2_MASK_317 "xxxx?xxx????xxxx????xxxx????xxxx????xxxx????"
+
+/*
+
+Sig 4D 2B C8 48 89 BC 24 ? ? ? ? 48 8B 15 ? ? ? ? 48 8D 8C 24 ? ? ? ? E8 ? ? ? ? 90
+Sig: \x4D\x2B\xC8\x48\x89\xBC\x24\x00\x00\x00\x00\x48\x8B\x15\x00\x00\x00\x00\x48\x8D\x8C\x24\x00\x00\x00\x00\xE8\x00\x00\x00\x00\x90, xxxxxxx????xxx????xxxx????x????x
+Sig 4C 8B 44 24 ? 4D 2B C8 48 89 BC 24 ? ? ? ? 48 8B 15 ? ? ? ? 48 8D 8C 24 ? ? ? ? E8 ? ? ? ? 90
+Sig: \x4C\x8B\x44\x24\x00\x4D\x2B\xC8\x48\x89\xBC\x24\x00\x00\x00\x00\x48\x8B\x15\x00\x00\x00\x00\x48\x8D\x8C\x24\x00\x00\x00\x00\xE8\x00\x00\x00\x00\x90, xxxx?xxxxxxx????xxx????xxxx????x????x
+Sig 48 89 BC 24 ? ? ? ? 4C 8D 44 24 ? 48 8B 15 ? ? ? ? 48 8B 9C 24 ? ? ? ?
+Sig: \x48\x89\xBC\x24\x00\x00\x00\x00\x4C\x8D\x44\x24\x00\x48\x8B\x15\x00\x00\x00\x00\x48\x8B\x9C\x24\x00\x00\x00\x00, xxxx????xxxx?xxx????xxxx????
+ */
+#define STATICLICENSE_1_SIGN_316 "\x4C\x8B\x44\x24\x00\x4D\x2B\xC8\x48\x89\xBC\x24\x00\x00\x00\x00\x48\x8B\x15\x00\x00\x00\x00\x48\x8D\x8C\x24\x00\x00\x00\x00\xE8\x00\x00\x00\x00\x90"
+#define STATICLICENSE_1_MASK_316 "xxxx?xxxxxxx????xxx????xxxx????x????x"
+
+#define STATICLICENSE_2_SIGN_316 "\x48\x89\xBC\x24\x00\x00\x00\x00\x4C\x8D\x44\x24\x00\x48\x8B\x15\x00\x00\x00\x00\x48\x8B\x9C\x24\x00\x00\x00\x00"
+#define STATICLICENSE_2_MASK_316 "xxxx????xxxx?xxx????xxxx????"
+
+#define H(varname, target_jump, target_bjump, publicname, sign, pattern, size) 											\
+auto addr_ ##varname = mem::find_pattern(module, string(sign, strlen(pattern)), pattern); 								\
+AFAIL(addr_ ##varname, publicname); 																					\
+this->hook_ ##varname = this->make_jmp(addr_ ##varname, reinterpret_cast<uintptr_t>(target_jump), size, false); 		\
+HFAIL(this->hook_ ##varname, publicname); 																		    	\
+target_bjump = this->hook_ ##varname->jumpback_address();
 
 bool HookWindows64::hook(std::string& error) {
-	_hook_windows_x64_getaddrinfo_target = reinterpret_cast<uintptr_t>(&HookWindows64::getaddrinfo);
 	_hook_windows_x64_injected_target = reinterpret_cast<uintptr_t>(&HookWindows64::injected);
 	_hook_windows_x64_getlicenseroot_target = reinterpret_cast<uintptr_t>(&Hook::getPublicKeyPtr);
 	_hook_windows_x64_dns_send_target = reinterpret_cast<uintptr_t>(&HookWindows64::dns_send);
@@ -112,10 +137,10 @@ bool HookWindows64::hook(std::string& error) {
 		return false;
 	}
 
-	//This method just get called when you already have the address
 	auto addr_getaddrinfo = mem::find_pattern(module, string(GETADDRINFO_SIGN, strlen(GETADDRINFO_MASK)), GETADDRINFO_MASK);
 	AFAIL(addr_getaddrinfo, "getaddrinfo");
-	this->hook_getaddrinfo = this->make_jmp(addr_getaddrinfo, reinterpret_cast<uintptr_t>(&_hook_windows_x64_getaddrinfo), 0x13F86F0AF - 0x13F86F09E, false);
+	_hook_windows_x64_getaddrinfo_target = reinterpret_cast<uintptr_t>(&Hook::getaddrinfo);
+	this->hook_getaddrinfo = this->make_jmp(addr_getaddrinfo, reinterpret_cast<uintptr_t>(&_hook_windows_x64_getaddrinfo), 0x13FCC3DEC - 0x13FCC3DD5, false);
 	HFAIL(this->hook_getaddrinfo, "getaddrinfo");
 	_hook_windows_x64_getaddrinfo_jump = this->hook_getaddrinfo->jumpback_address();
 
@@ -125,17 +150,40 @@ bool HookWindows64::hook(std::string& error) {
 	HFAIL(this->hook_getaddrinfo, "injected");
 	_hook_windows_x64_injected_jump = inject_hook->jumpback_address();
 
-	auto addr_license = mem::find_pattern(module, string(STATICLICENSE_SIGN, strlen(STATICLICENSE_MASK)), STATICLICENSE_MASK);
-	AFAIL(addr_license, "static license (1)");
-	this->hook_getlicenseroot_1 = this->make_jmp(addr_license, reinterpret_cast<uintptr_t>(&_hook_windows_x64_getlicenseroot), 0x1404CA0AA - 0x1404CA098, false);
-	HFAIL(this->hook_getlicenseroot_1, "static license (1)");
-	_hook_windows_x64_getlicenseroot_jump = this->hook_getlicenseroot_1->jumpback_address();
+	bool lincense_hooked = false;
+	if(plugin::api::version_minor() == 1) {
+		if(plugin::api::version_patch() <= 6) {
+			cout << "Using 3.1.6 data" << endl;
+			H(getlicenseroot_1, &_hook_windows_x64_getlicenseroot_1_316, _hook_windows_x64_getlicenseroot_1_jump, "static license (1)", STATICLICENSE_1_SIGN_316, STATICLICENSE_1_MASK_316, 0x1404E7E5A - 0x1404E7E43);
+			H(getlicenseroot_2, &_hook_windows_x64_getlicenseroot_2_316, _hook_windows_x64_getlicenseroot_2_jump, "static license (2)", STATICLICENSE_2_SIGN_316, STATICLICENSE_2_MASK_316, 0x1404E7F51 - 0x1404E7F35);
 
-	auto addr_license1 = mem::find_pattern(module, string(STATICLICENSE1_SIGN, strlen(STATICLICENSE1_MASK)), STATICLICENSE1_MASK);
-	AFAIL(addr_license, "static license (2)");
-	auto license_hook1 = this->make_jmp(addr_license1, reinterpret_cast<uintptr_t>(&_hook_windows_x64_getlicenseroot1), 0x1404CA242 - 0x1404CA22E, false);
-	HFAIL(this->hook_getaddrinfo, "static license (2)");
-	_hook_windows_x64_getlicenseroot1_jump = license_hook1->jumpback_address();
+			lincense_hooked = true;
+		} else {
+			//place here the stuff bellow later
+		}
+	}
+	//Fallback / newest
+	if(!lincense_hooked) {
+		cout << "Using >= 3.1.7 data" << endl;
+		H(getlicenseroot_1, &_hook_windows_x64_getlicenseroot_1_317, _hook_windows_x64_getlicenseroot_1_jump, "static license (1)", STATICLICENSE_1_SIGN_317, STATICLICENSE_1_MASK_317, 0x1404CA0AA - 0x1404CA098);
+		H(getlicenseroot_2, &_hook_windows_x64_getlicenseroot_2_317, _hook_windows_x64_getlicenseroot_2_jump, "static license (2)", STATICLICENSE_2_SIGN_317, STATICLICENSE_2_MASK_317, 0x1404CA242 - 0x1404CA22E);
+	}
+
+
+	/*
+	auto addr_license_1 = mem::find_pattern(module, string(STATICLICENSE_1_SIGN_317, strlen(STATICLICENSE_1_MASK_317)), STATICLICENSE_1_MASK_317);
+	AFAIL(addr_license_1, "static license (1)");
+	this->hook_getlicenseroot_1 = this->make_jmp(addr_license_1, reinterpret_cast<uintptr_t>(&_hook_windows_x64_getlicenseroot_1_317), 0x1404CA0AA - 0x1404CA098, false);
+	HFAIL(this->hook_getlicenseroot_1, "static license (1)");
+	_hook_windows_x64_getlicenseroot_1_jump = this->hook_getlicenseroot_1->jumpback_address();
+
+	auto addr_license_2 = mem::find_pattern(module, string(STATICLICENSE_2_SIGN_317, strlen(STATICLICENSE_2_MASK_317)), STATICLICENSE_2_MASK_317);
+	AFAIL(addr_license_1, "static license (2)");
+	this->hook_getlicenseroot_2 = this->make_jmp(addr_license_2, reinterpret_cast<uintptr_t>(&_hook_windows_x64_getlicenseroot_2_317), 0x1404CA242 - 0x1404CA22E, false);
+	HFAIL(this->hook_getlicenseroot_2, "static license (2)");
+	_hook_windows_x64_getlicenseroot_2_jump = this->hook_getlicenseroot_2->jumpback_address();
+	 */
+
 
 	//This hook get called when TeamSpeak resolved the target (on join) domain name
 	//Not required, but nice to have :D
@@ -160,8 +208,12 @@ void HookWindows64::injected(void *builder) {
 	cout << "Got injected builder at " << builder << endl;
 	auto parser = (ParameterParser*) builder;
 
-	ssize_t index;
+	ssize_t index = 0;
+	cout << "proof: " << parser->getParamValue("proof", index) << " -> " << index << endl;
+	cout << "l: " << parser->getParamValue("l", index) << " -> " << index << endl;
+	cout << "root: " << parser->getParamValue("root", index) << " -> " << index << endl;
 	if(parser->hasParam("root")) {
+		cout << "Contained a costume root key" << endl;
 		auto costume_root = parser->getParamValue("root", index);
 		cout << "Root key: " << costume_root << endl;
 		auto root = base64::decode(costume_root);
@@ -171,6 +223,7 @@ void HookWindows64::injected(void *builder) {
 		memcpy(costume_license->publicLicense, root.data(), 32);
 		costume_license_ptr = (uintptr_t) costume_license.get();
 	} else {
+		cout << "Using default TeamSpeak 3 root key" << endl;
 		costume_license_ptr = 0;
 		costume_license.reset();
 	}
@@ -178,19 +231,4 @@ void HookWindows64::injected(void *builder) {
 
 int HookWindows64::dns_send(SOCKET s, const char* buf, int len, int flags) {
 	return ::send(s, buf, len, flags);
-}
-
-int HookWindows64::getaddrinfo(const char* name, const char*, const addrinfo*, addrinfo**) {
-	cout << "Aborting getaddrinfo(...) for address " << name << endl;
-	//Notice:
-	//Im just destroying this method totally, but TeamSpeak is even more incredible than this!
-	//TeamSpeak just uses for all their dns resolves a own method and the real fun fun fact is,
-	//that this method just get called, when they already have resolved the target address.
-	//You thought that's the funniest part?! You're wrong! Totally wrong!
-	//Guess what:
-	//If this method fails (getaddrinfo(...) failed for an ip address WHAT?!?!), the TeamSpeak 3 client stops
-	//the current request mechanism and do not event request the blacklist!
-	//So as a conclusion: TeamSpeak 3 calls a unnecessary function, and stops the blacklist request if this call fails! => Fuck off TeamSpeak!
-
-	return 1;
 }
