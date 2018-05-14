@@ -21,6 +21,8 @@ namespace mem {
 		size_t code_length;
 		size_t fragment_length;
 
+		inline uintptr_t jumpback_address() { return this->address + code_length; }
+
 		~CodeFragment();
 	};
 	std::unique_ptr<CodeFragment> replace(uintptr_t address, void* new_code, size_t code_length, size_t fragment_length);

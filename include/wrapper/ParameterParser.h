@@ -40,9 +40,9 @@ namespace wrapper {
 #ifndef WIN32
 			ParameterParser::fn_getLastError getLastError;
 #endif
-			ParameterParser::fn_getParamIndex getParamIndex;
-			ParameterParser::fn_getParamValue getParamValue;
-			ParameterParser::fn_getParamValueID getParamValueID;
+			ParameterParser::fn_getParamIndex getParamIndex 	= 0;
+			ParameterParser::fn_getParamValue getParamValue		= 0;
+			ParameterParser::fn_getParamValueID getParamValueID	= 0;
 		};
 		extern ParameterParserFunctions* fn_ParameterParser;
 	}

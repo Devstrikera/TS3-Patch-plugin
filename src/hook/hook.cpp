@@ -62,7 +62,7 @@ int Hook::getaddrinfo(const char *name, const char *service, const addrinfo *req
 }
 
 uintptr_t Hook::getPublicKeyPtr() {
-	uintptr_t result = (uintptr_t) wrapper::static_license_root;
+	auto result = (uintptr_t) wrapper::static_license_root;
 	cout << "Got license root key request!" << endl;
 	if(costume_license && costume_license_ptr > 0) {
 		cout << "Using costume license key! (" << costume_license_ptr << ")" << endl;

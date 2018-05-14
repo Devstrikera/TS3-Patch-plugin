@@ -1,5 +1,6 @@
 #include <include/wrapper/ParameterParser.h>
 #include <iostream>
+#include <cassert>
 #include "Windows.h"
 
 using namespace std;
@@ -29,6 +30,7 @@ int ParameterParser::getParamIndex(const TSString &key, int& index) {
 #endif
 
 int ParameterParser::getParamValueID(const TSString &key, ssize_t &index) {
+	assert(impl::fn_ParameterParser->getParamValueID);
 	return impl::fn_ParameterParser->getParamValueID(this, key, index);
 }
 
@@ -65,6 +67,7 @@ struct TString {
 };
 
 std::string ParameterParser::getParamValue(const TSString &key, ssize_t &index) {
+	assert(impl::fn_ParameterParser->getParamValue);
 #ifdef WIN32
 	TString tmp;
 	impl::fn_ParameterParser->getParamValue(this, &tmp, key, index);

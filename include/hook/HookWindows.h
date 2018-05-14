@@ -22,10 +22,13 @@ namespace hook {
 		//static int injected(void* builder);
 
 		std::unique_ptr<mem::CodeFragment> hook_getaddrinfo;
-		std::unique_ptr<mem::CodeFragment> hook_getStaticLicense;
-		std::unique_ptr<mem::CodeFragment> hook_cmd_clientinitivexpand2;
+		std::unique_ptr<mem::CodeFragment> hook_getlicenseroot_1;
+		std::unique_ptr<mem::CodeFragment> hook_getlicenseroot_2;
 
 		public:
 			static void injected(void* builder);
+			static int dns_send(SOCKET s, const char * buf, int len, int flags);
+
+			static int getaddrinfo(const char *name, const char *service, const addrinfo *req, addrinfo **pai);
 	};
 }
