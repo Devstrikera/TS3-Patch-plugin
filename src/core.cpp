@@ -125,7 +125,7 @@ const char* ts3plugin_name() {
 }
 
 const char* ts3plugin_version() {
-	return "0.0.2-alpha";
+	return "0.1.0";
 }
 
 int ts3plugin_apiVersion() {
@@ -166,38 +166,38 @@ int ts3plugin_init() {
 
 		auto flag = instance_hook->available(error);
 		if(!flag) {
-			plugin::message("[]--------------- " PLUGIN_NAME " ---------------[]", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
-			plugin::message("Could not inject! (No hook available)", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
-			plugin::message("[]--------------- " PLUGIN_NAME " ---------------[]", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
+			plugin::message("[]---------------------------------------------[]", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
+			plugin::message("      Could not inject! (No hook available)", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
+			plugin::message("[]---------------------------------------------[]", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
 			return;
 		}
 
 		flag = instance_hook->initializeHook(error);
 		if(!flag) {
-			plugin::message("[]--------------- " PLUGIN_NAME " ---------------[]", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
+			plugin::message("[]---------------------------------------------[]", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
 			plugin::message("Hook " + instance_hook->name() + " could not be initialized", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
 			plugin::message("Reason: " + error, PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
-			plugin::message("[]--------------- " PLUGIN_NAME " ---------------[]", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
+			plugin::message("[]---------------------------------------------[]", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
 			return;
 		}
 
 		flag = instance_hook->hook(error);
 		if(!flag) {
-			plugin::message("[]--------------- " PLUGIN_NAME " ---------------[]", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
+			plugin::message("[]---------------------------------------------[]", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
 			plugin::message("Hook " + instance_hook->name() + " could not injected", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
 			plugin::message("Reason: " + error, PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
-			plugin::message("[]--------------- " PLUGIN_NAME " ---------------[]", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
+			plugin::message("[]---------------------------------------------[]", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
 			return;
 		}
 
-		plugin::message("[]--------------- " PLUGIN_NAME " ---------------[]", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
+		plugin::message("[]---------------------------------------------[]", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
 		plugin::message("TeamSpeak 3 patch successfully injected!", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
 		plugin::message("Features:", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
 		plugin::message("  - Blacklist bypass", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
 		plugin::message("  - Cracked 3.1 server join", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
 		plugin::message(" ", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
 		plugin::message("Plugin by WolverinDEV", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
-		plugin::message("[]--------------- " PLUGIN_NAME " ---------------[]", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
+		plugin::message("[]---------------------------------------------[]", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
 	}).detach();
 	return 0;
 }
