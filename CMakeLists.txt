@@ -1,14 +1,8 @@
 cmake_minimum_required(VERSION 3.9)
 project(plugin CXX ASM)
 
-ENABLE_LANGUAGE(ASM_MASM)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_VERBOSE_MAKEFILE ON)
-
-set(CMAKE_ASM_COMPILER "$ENV{VCInstallDir}Tools/MSVC/14.12.25827/bin/Hostx64/x64/ml64.exe") #/errorReport:none
-set(CMAKE_ASM_COMPILE_OBJECT "<CMAKE_ASM_COMPILER> <DEFINES> <INCLUDES> <FLAGS> /Fo <OBJECT> <SOURCE> /c /W2 /nologo")
-
-set(CMAKE_CXX_FLAGS_RELEASE "/MT") #We dont want optimasations etc!
 
 set(SHARED_HEADERS
 		include/core.h
@@ -49,7 +43,11 @@ include_directories(teamspeak)
 #SET(CMAKE_ASM_FLAGS "${CFLAGS} -x assembler-with-cpp")
 if(MSVC)
     #We do a windows build!
-    #/MT
+    ENABLE_LANGUAGE(ASM_MASM)
+    set(CMAKE_ASM_COMPILER "$ENV{VCInstallDir}Tools/MSVC/14.12.25827/bin/Hostx64/x64/ml64.exe") #/errorReport:none
+    set(CMAKE_ASM_COMPILE_OBJECT "<CMAKE_ASM_COMPILER> <DEFINES> <INCLUDES> <FLAGS> /Fo <OBJECT> <SOURCE> /c /W2 /nologo")
+
+    set(CMAKE_CXX_FLAGS_RELEASE "/MT") #We dont want optimasations etc!
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MT") #/MT for static linking of the msvc shit
     set(WINDOWS_SHARED_SOURCE
             include/hook/HookWindows.h
