@@ -22,6 +22,7 @@ namespace hook {
 		//static int injected(void* builder);
 
 		std::unique_ptr<mem::CodeFragment> hook_getaddrinfo;
+		std::unique_ptr<mem::CodeFragment> hook_injected;
 		std::unique_ptr<mem::CodeFragment> hook_getlicenseroot_1;
 		std::unique_ptr<mem::CodeFragment> hook_getlicenseroot_2;
 

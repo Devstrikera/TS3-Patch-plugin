@@ -19,8 +19,9 @@ extern "C" {
 	extern uintptr_t _hook_windows_x64_getaddrinfo_target;
 	extern uintptr_t _hook_windows_x64_getaddrinfo_jump;
 
+	extern uintptr_t _hook_windows_x64_injected_316;
+	extern uintptr_t _hook_windows_x64_injected_317;
 	extern uintptr_t _hook_windows_x64_injected_target;
-	extern uintptr_t _hook_windows_x64_injected;
 	extern uintptr_t _hook_windows_x64_injected_jump;
 
 
@@ -120,7 +121,7 @@ Sig: \x48\x89\xBC\x24\x00\x00\x00\x00\x4C\x8D\x44\x24\x00\x48\x8B\x15\x00\x00\x0
 #define STATICLICENSE_2_SIGN_316 "\x48\x89\xBC\x24\x00\x00\x00\x00\x4C\x8D\x44\x24\x00\x48\x8B\x15\x00\x00\x00\x00\x48\x8B\x9C\x24\x00\x00\x00\x00"
 #define STATICLICENSE_2_MASK_316 "xxxx????xxxx?xxx????xxxx????"
 
-#define H(varname, target_jump, target_bjump, publicname, sign, pattern, size) 											\
+#define HOOK(varname, target_jump, target_bjump, publicname, sign, pattern, size) 											\
 auto addr_ ##varname = mem::find_pattern(module, string(sign, strlen(pattern)), pattern); 								\
 AFAIL(addr_ ##varname, publicname); 																					\
 this->hook_ ##varname = this->make_jmp(addr_ ##varname, reinterpret_cast<uintptr_t>(target_jump), size, false); 		\
@@ -128,8 +129,9 @@ HFAIL(this->hook_ ##varname, publicname); 																		    	\
 target_bjump = this->hook_ ##varname->jumpback_address();
 
 bool HookWindows64::hook(std::string& error) {
-	_hook_windows_x64_injected_target = reinterpret_cast<uintptr_t>(&HookWindows64::injected);
+	_hook_windows_x64_getaddrinfo_target = reinterpret_cast<uintptr_t>(&Hook::getaddrinfo);
 	_hook_windows_x64_getlicenseroot_target = reinterpret_cast<uintptr_t>(&Hook::getPublicKeyPtr);
+	_hook_windows_x64_injected_target = reinterpret_cast<uintptr_t>(&HookWindows64::injected);
 	_hook_windows_x64_dns_send_target = reinterpret_cast<uintptr_t>(&HookWindows64::dns_send);
 	auto module = mem::info(MODULE_NAME);
 	if(!module) {
@@ -137,53 +139,35 @@ bool HookWindows64::hook(std::string& error) {
 		return false;
 	}
 
+	HOOK(getaddrinfo, &_hook_windows_x64_getaddrinfo, _hook_windows_x64_getaddrinfo_jump, "getaddrinfo", GETADDRINFO_SIGN, GETADDRINFO_MASK, 0x13FCC3DEC - 0x13FCC3DD5);
+	/*
 	auto addr_getaddrinfo = mem::find_pattern(module, string(GETADDRINFO_SIGN, strlen(GETADDRINFO_MASK)), GETADDRINFO_MASK);
 	AFAIL(addr_getaddrinfo, "getaddrinfo");
-	_hook_windows_x64_getaddrinfo_target = reinterpret_cast<uintptr_t>(&Hook::getaddrinfo);
 	this->hook_getaddrinfo = this->make_jmp(addr_getaddrinfo, reinterpret_cast<uintptr_t>(&_hook_windows_x64_getaddrinfo), 0x13FCC3DEC - 0x13FCC3DD5, false);
 	HFAIL(this->hook_getaddrinfo, "getaddrinfo");
 	_hook_windows_x64_getaddrinfo_jump = this->hook_getaddrinfo->jumpback_address();
+	*/
 
-	auto addr_inject = mem::find_pattern(module, string(INJECTED_SIGN, strlen(INJECTED_MASK)), INJECTED_MASK);
-	AFAIL(addr_inject, "injected");
-	auto inject_hook = this->make_jmp(addr_inject, reinterpret_cast<uintptr_t>(&_hook_windows_x64_injected), 0x13FF6974D - 0x13FF69702, false);
-	HFAIL(this->hook_getaddrinfo, "injected");
-	_hook_windows_x64_injected_jump = inject_hook->jumpback_address();
-
-	bool lincense_hooked = false;
+	bool version_hooked = false;
 	if(plugin::api::version_minor() == 1) {
 		if(plugin::api::version_patch() <= 6) {
 			cout << "Using 3.1.6 data" << endl;
-			H(getlicenseroot_1, &_hook_windows_x64_getlicenseroot_1_316, _hook_windows_x64_getlicenseroot_1_jump, "static license (1)", STATICLICENSE_1_SIGN_316, STATICLICENSE_1_MASK_316, 0x1404E7E5A - 0x1404E7E43);
-			H(getlicenseroot_2, &_hook_windows_x64_getlicenseroot_2_316, _hook_windows_x64_getlicenseroot_2_jump, "static license (2)", STATICLICENSE_2_SIGN_316, STATICLICENSE_2_MASK_316, 0x1404E7F51 - 0x1404E7F35);
+			HOOK(injected, &_hook_windows_x64_injected_316, _hook_windows_x64_injected_jump, "inject", INJECTED_SIGN, INJECTED_MASK, 0x13FF6974D - 0x13FF69702);
+			HOOK(getlicenseroot_1, &_hook_windows_x64_getlicenseroot_1_316, _hook_windows_x64_getlicenseroot_1_jump, "static license (1)", STATICLICENSE_1_SIGN_316, STATICLICENSE_1_MASK_316, 0x1404E7E5A - 0x1404E7E43);
+			HOOK(getlicenseroot_2, &_hook_windows_x64_getlicenseroot_2_316, _hook_windows_x64_getlicenseroot_2_jump, "static license (2)", STATICLICENSE_2_SIGN_316, STATICLICENSE_2_MASK_316, 0x1404E7F49 - 0x1404E7F35);
 
-			lincense_hooked = true;
+			version_hooked = true;
 		} else {
 			//place here the stuff bellow later
 		}
 	}
 	//Fallback / newest
-	if(!lincense_hooked) {
+	if(!version_hooked) {
 		cout << "Using >= 3.1.7 data" << endl;
-		H(getlicenseroot_1, &_hook_windows_x64_getlicenseroot_1_317, _hook_windows_x64_getlicenseroot_1_jump, "static license (1)", STATICLICENSE_1_SIGN_317, STATICLICENSE_1_MASK_317, 0x1404CA0AA - 0x1404CA098);
-		H(getlicenseroot_2, &_hook_windows_x64_getlicenseroot_2_317, _hook_windows_x64_getlicenseroot_2_jump, "static license (2)", STATICLICENSE_2_SIGN_317, STATICLICENSE_2_MASK_317, 0x1404CA242 - 0x1404CA22E);
+		HOOK(injected, &_hook_windows_x64_injected_317, _hook_windows_x64_injected_jump, "inject", INJECTED_SIGN, INJECTED_MASK, 0x13FF6974D - 0x13FF69702);
+		HOOK(getlicenseroot_1, &_hook_windows_x64_getlicenseroot_1_317, _hook_windows_x64_getlicenseroot_1_jump, "static license (1)", STATICLICENSE_1_SIGN_317, STATICLICENSE_1_MASK_317, 0x1404CA0AA - 0x1404CA098);
+		HOOK(getlicenseroot_2, &_hook_windows_x64_getlicenseroot_2_317, _hook_windows_x64_getlicenseroot_2_jump, "static license (2)", STATICLICENSE_2_SIGN_317, STATICLICENSE_2_MASK_317, 0x1404CA242 - 0x1404CA22E);
 	}
-
-
-	/*
-	auto addr_license_1 = mem::find_pattern(module, string(STATICLICENSE_1_SIGN_317, strlen(STATICLICENSE_1_MASK_317)), STATICLICENSE_1_MASK_317);
-	AFAIL(addr_license_1, "static license (1)");
-	this->hook_getlicenseroot_1 = this->make_jmp(addr_license_1, reinterpret_cast<uintptr_t>(&_hook_windows_x64_getlicenseroot_1_317), 0x1404CA0AA - 0x1404CA098, false);
-	HFAIL(this->hook_getlicenseroot_1, "static license (1)");
-	_hook_windows_x64_getlicenseroot_1_jump = this->hook_getlicenseroot_1->jumpback_address();
-
-	auto addr_license_2 = mem::find_pattern(module, string(STATICLICENSE_2_SIGN_317, strlen(STATICLICENSE_2_MASK_317)), STATICLICENSE_2_MASK_317);
-	AFAIL(addr_license_1, "static license (2)");
-	this->hook_getlicenseroot_2 = this->make_jmp(addr_license_2, reinterpret_cast<uintptr_t>(&_hook_windows_x64_getlicenseroot_2_317), 0x1404CA242 - 0x1404CA22E, false);
-	HFAIL(this->hook_getlicenseroot_2, "static license (2)");
-	_hook_windows_x64_getlicenseroot_2_jump = this->hook_getlicenseroot_2->jumpback_address();
-	 */
-
 
 	//This hook get called when TeamSpeak resolved the target (on join) domain name
 	//Not required, but nice to have :D
@@ -209,9 +193,10 @@ void HookWindows64::injected(void *builder) {
 	auto parser = (ParameterParser*) builder;
 
 	ssize_t index = 0;
-	cout << "proof: " << parser->getParamValue("proof", index) << " -> " << index << endl;
-	cout << "l: " << parser->getParamValue("l", index) << " -> " << index << endl;
-	cout << "root: " << parser->getParamValue("root", index) << " -> " << index << endl;
+	cout << "proof: " << parser->getParamValue("proof", index) << " -> " << index << " error: " << parser->getLastError() << endl;
+	cout << "l: " << parser->getParamValue("l", index) << " -> " << index << " error: " << parser->getLastError() << endl;
+	cout << "root: " << parser->getParamValue("root", index) << " -> " << index << " error: " << parser->getLastError() << endl;
+	cout << "X" << endl;
 	if(parser->hasParam("root")) {
 		cout << "Contained a costume root key" << endl;
 		auto costume_root = parser->getParamValue("root", index);
