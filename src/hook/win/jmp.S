@@ -20,7 +20,8 @@ PUBLIC _hook_windows_x64_getaddrinfo
 PUBLIC _hook_windows_x64_getaddrinfo_target
 PUBLIC _hook_windows_x64_getaddrinfo_jump
 
-PUBLIC _hook_windows_x64_injected
+PUBLIC _hook_windows_x64_injected_316
+PUBLIC _hook_windows_x64_injected_317
 PUBLIC _hook_windows_x64_injected_target
 PUBLIC _hook_windows_x64_injected_jump
 
@@ -78,7 +79,6 @@ _hook_windows_x64_getaddrinfo:
     lea     r8, [rsi+48h] ;13FCC3DDC
     mov     rdx, rdi ;13FCC3DE0
     mov     rcx, rbx ;13FCC3DE3
-    jmp _hook_windows_x64_getaddrinfo
 
     sub rsp, 20h
     lea rax, _hook_windows_x64_getaddrinfo_target
@@ -90,14 +90,20 @@ _hook_windows_x64_getaddrinfo:
     mov rdx, [rdx]
     jmp rdx
 
+_hook_windows_x64_injected_316:
+    mov rcx, rsi
+    jmp _hook_windows_x64_injected
+
+_hook_windows_x64_injected_317:
+    mov rcx, r14
+
 _hook_windows_x64_injected:
     pushaq
-    ;sub rsp, 20h
-    mov rcx, r14
+    sub rsp, 8h
     lea rax, _hook_windows_x64_injected_target
     mov rax, [rax]
     call rax
-    ;add rsp, 20h
+    add rsp, 8h
     popaq
 
     ;We have to jump back again :)
