@@ -6,6 +6,8 @@
 	#include <Windows.h>
 	#include <WinInet.h>
 	#include <WS2tcpip.h>
+#else
+	#include "netdb.h"
 #endif
 #include <string>
 

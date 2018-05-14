@@ -5,11 +5,6 @@ ENABLE_LANGUAGE(ASM_MASM)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
-set(CMAKE_ASM_COMPILER "$ENV{VCInstallDir}Tools/MSVC/14.12.25827/bin/Hostx64/x64/ml64.exe") #/errorReport:none
-set(CMAKE_ASM_COMPILE_OBJECT "<CMAKE_ASM_COMPILER> <DEFINES> <INCLUDES> <FLAGS> /Fo <OBJECT> <SOURCE> /c /W2 /nologo")
-
-set(CMAKE_CXX_FLAGS_RELEASE "/MT") #We dont want optimasations etc!
-
 set(SHARED_HEADERS
 		include/core.h
 		include/plugin.h
@@ -46,11 +41,12 @@ set(SHARED_SOURCE
 )
 
 include_directories(teamspeak)
-#SET(CMAKE_ASM_FLAGS "${CFLAGS} -x assembler-with-cpp")
 if(MSVC)
+    set(CMAKE_ASM_COMPILER "$ENV{VCInstallDir}Tools/MSVC/14.12.25827/bin/Hostx64/x64/ml64.exe") #/errorReport:none
+    set(CMAKE_ASM_COMPILE_OBJECT "<CMAKE_ASM_COMPILER> <DEFINES> <INCLUDES> <FLAGS> /Fo <OBJECT> <SOURCE> /c /W2 /nologo")
+
     #We do a windows build!
-    #/MT
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MT") #/MT for static linking of the msvc shit
+    set(CMAKE_CXX_FLAGS_RELEASE "/MT") #We dont want optimasations etc!
     set(WINDOWS_SHARED_SOURCE
             include/hook/HookWindows.h
             src/hook/win/Hook.cpp
@@ -71,10 +67,10 @@ if(MSVC)
             /Fo${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/MemoryTest.dir/xxx.rsp
             "${CMAKE_SOURCE_DIR}/src/hook/win/jmp.S"
             COMMENT "Building asm file")
-    #target_sources(MemoryTest PUBLIC "xxx.rsp")
 else()
     #Its important to use the libc library (TeamSpeak uses that as well!
     #We run stuff for linux :D
+    SET(CMAKE_ASM_FLAGS "${CFLAGS} -x assembler-with-cpp")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -nostdinc++ -std=c++11 -nodefaultlibs")
 
         set(LINUX_SHARED_SOURCE
@@ -84,7 +80,7 @@ else()
 
     include_directories(/usr/local/include/libcxx)
 
-    add_library(plugin SHARED ${HEADERS} ${SOURCE} ${LINUX_SHARED_SOURCE})
+    add_library(plugin SHARED ${SHARED_HEADERS} ${SHARED_SOURCE} ${LINUX_SHARED_SOURCE})
     target_link_libraries(plugin c++ c++abi m c gcc_s gcc )
 
     add_executable(MemoryTest test/linux/MemoryTest.cpp test/linux/jmp.S)

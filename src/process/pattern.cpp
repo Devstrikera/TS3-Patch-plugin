@@ -50,7 +50,8 @@ uintptr_t mem::find_pattern(const shared_ptr<MemoryRegion>& region, const std::s
 	return mem::find_pattern(region->start, region->size(), signature, pattern);
 }
 
-#ifndef WIN32
+#if false
+//#ifndef WIN32
 	#include "include/process/process.h"
 	uintptr_t mem::find_pattern(const std::shared_ptr<process::ProcessInfo>& process, const std::string &signature, const std::string &pattern) {
 		if(process->regions().empty())

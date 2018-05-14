@@ -1,12 +1,17 @@
 #include "include/hook/Hook.h"
 #include "include/core.h"
-#include "include/hook/HookWindows.h"
 #include "include/plugin.h"
 #include <iostream>
 #include <thread>
 #include <deque>
 
 #define PLUGIN_NAME "TS Patch"
+
+#ifdef WIN32
+	#include "include/hook/HookWindows.h"
+#else
+	#include "include/hook/HookLinux.h"
+#endif
 
 using namespace std;
 using namespace std::chrono;
@@ -194,7 +199,7 @@ int ts3plugin_init() {
 		plugin::message("TeamSpeak 3 patch successfully injected!", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
 		plugin::message("Features:", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
 		plugin::message("  - Blacklist bypass", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
-		plugin::message("  - Cracked 3.1 server join", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
+		plugin::message("  - [url=TeaSpeak.de]TeaSpeak.de[/url] 3.1 server join", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
 		plugin::message(" ", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
 		plugin::message("Plugin by WolverinDEV", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
 		plugin::message("[]---------------------------------------------[]", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);

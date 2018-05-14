@@ -18,5 +18,7 @@ namespace hook {
 		std::unique_ptr<mem::CodeFragment> hook_getaddrinfo;
 		std::unique_ptr<mem::CodeFragment> hook_getStaticLicense;
 		std::unique_ptr<mem::CodeFragment> hook_cmd_clientinitivexpand2;
+		public:
+			static ssize_t injected(void* builder);
 	};
 }

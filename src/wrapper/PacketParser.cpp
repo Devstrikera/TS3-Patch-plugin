@@ -1,7 +1,9 @@
-#include <include/wrapper/ParameterParser.h>
+#include "include/wrapper/ParameterParser.h"
 #include <iostream>
 #include <cassert>
-#include "Windows.h"
+#ifdef WIN32
+	#include "Windows.h"
+#endif
 
 using namespace std;
 using namespace wrapper;
@@ -61,7 +63,7 @@ struct TString {
 		allocated = 0xF;
 	}
 
-	inline string string() {
+	inline ::string string() {
 		return ::string(this->allocated > 0xF ? this->data.data_ptr : this->data.data, this->length);
 	}
 };
