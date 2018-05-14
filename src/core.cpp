@@ -88,10 +88,10 @@ namespace plugin {
 
 	void message(const std::string& message, PluginMessageTarget target, bool chat) {
 		auto funcs = functions();
-		if(functions().printMessage)
-			functions().printMessage(funcs.getCurrentServerConnectionHandlerID(), message.c_str(), target);
 		if(!messagesInitialized)
 			buffered.push_back({message, target});
+		else if(functions().printMessage)
+			functions().printMessage(funcs.getCurrentServerConnectionHandlerID(), message.c_str(), target);
 		if(chat)
 			cout << message << endl;
 	}
@@ -142,7 +142,7 @@ const char* ts3plugin_description() {
 
 int ts3plugin_init() {
 	std::thread([](){
-		this_thread::sleep_for(milliseconds(1000));
+		this_thread::sleep_for(milliseconds(500));
 		plugin::guiInitialized();
 	}).detach();
 
