@@ -12,7 +12,9 @@ namespace mem {
 	uintptr_t find_pattern(const std::shared_ptr<MemoryRegion>&, const std::string& signature);
 	uintptr_t find_pattern(const std::shared_ptr<MemoryRegion>&, const std::string& signature, const std::string& pattern);
 	//The process stuff not yet implemented for windows
-#ifndef WIN32
+
+#if false
+//#ifndef WIN32
 	uintptr_t find_pattern(const std::shared_ptr<process::ProcessInfo>&, const std::string& signature);
 	uintptr_t find_pattern(const std::shared_ptr<process::ProcessInfo>&, const std::string& signature, const std::string& pattern);
 #endif

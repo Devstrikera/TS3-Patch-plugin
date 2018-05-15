@@ -15,7 +15,7 @@ namespace wrapper {
 #ifdef WIN32
 			typedef void*(*fn_getParamValue)(void*, void*, const TSString&, ssize_t& index);
 #else
-			typedef void*(*fn_getParamValue)(std::string&, void*, const TSString&, ssize& index);
+			typedef void*(*fn_getParamValue)(std::string&, void*, const TSString&, ssize_t& index);
 #endif
 			typedef int(*fn_getLastError)(void*);
 			typedef int(*fn_getParamIndex)(void*, const TSString&, ssize_t& index);
@@ -38,11 +38,11 @@ namespace wrapper {
 	namespace impl {
 		struct ParameterParserFunctions {
 #ifndef WIN32
-			ParameterParser::fn_getLastError getLastError;
+			ParameterParser::fn_getLastError getLastError 		= nullptr;
 #endif
-			ParameterParser::fn_getParamIndex getParamIndex 	= 0;
-			ParameterParser::fn_getParamValue getParamValue		= 0;
-			ParameterParser::fn_getParamValueID getParamValueID	= 0;
+			ParameterParser::fn_getParamIndex getParamIndex 	= nullptr;
+			ParameterParser::fn_getParamValue getParamValue		= nullptr;
+			ParameterParser::fn_getParamValueID getParamValueID	= nullptr;
 		};
 		extern ParameterParserFunctions* fn_ParameterParser;
 	}

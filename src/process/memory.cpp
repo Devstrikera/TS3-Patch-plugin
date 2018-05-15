@@ -1,14 +1,14 @@
 #include <cstring>
 #include <iostream>
-#include <Windows.h>
-#include <Psapi.h>
-#include "include/process/memory.h"
-
 #ifndef WIN32
 	#include <sys/mman.h>
+	#include <zconf.h>
 #else
-
+	#include <Windows.h>
+	#include <Psapi.h>
 #endif
+#include "include/process/memory.h"
+
 
 using namespace std;
 bool mem::read(void *buffer, uintptr_t address, size_t length) {

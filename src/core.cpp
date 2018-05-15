@@ -1,12 +1,18 @@
 #include "include/hook/Hook.h"
 #include "include/core.h"
-#include "include/hook/HookWindows.h"
 #include "include/plugin.h"
+#include "include/update/updater.h"
 #include <iostream>
 #include <thread>
 #include <deque>
 
 #define PLUGIN_NAME "TS Patch"
+
+#ifdef WIN32
+	#include "include/hook/HookWindows.h"
+#else
+	#include "include/hook/HookLinux.h"
+#endif
 
 using namespace std;
 using namespace std::chrono;
@@ -125,7 +131,7 @@ const char* ts3plugin_name() {
 }
 
 const char* ts3plugin_version() {
-	return "0.1.0";
+	return update::local_version().string().c_str();
 }
 
 int ts3plugin_apiVersion() {
@@ -142,7 +148,7 @@ const char* ts3plugin_description() {
 
 int ts3plugin_init() {
 	std::thread([](){
-		this_thread::sleep_for(milliseconds(500));
+		this_thread::sleep_for(milliseconds(1000));
 		plugin::guiInitialized();
 	}).detach();
 
@@ -153,7 +159,8 @@ int ts3plugin_init() {
 		plugin::message("Dont initialize TS Patch", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
 		return 1;
 	}
-	cout << "Client-Version: " << plugin::api::version() << " (Major: " << get<0>(version) << " Minor: " << get<1>(version) << " Patch: " << get<2>(version) << ")" << endl;
+	cout << "Client Version: " << plugin::api::version() << " (Major: " << get<0>(version) << " Minor: " << get<1>(version) << " Patch: " << get<2>(version) << ")" << endl;
+	cout << "Plugin Version: " << update::local_version().string() << " (Major: " << update::local_version().major << " Minor: " << update::local_version().minor << " Patch: " << update::local_version().patch << ")" << endl;
 	plugin::message("Loading hook (async)", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
 
 	thread([](){
@@ -194,11 +201,27 @@ int ts3plugin_init() {
 		plugin::message("TeamSpeak 3 patch successfully injected!", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
 		plugin::message("Features:", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
 		plugin::message("  - Blacklist bypass", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
-		plugin::message("  - Cracked 3.1 server join", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
+		plugin::message("  - [url=TeaSpeak.de]TeaSpeak.de[/url] 3.1 server join", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
 		plugin::message(" ", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
 		plugin::message("Plugin by WolverinDEV", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
 		plugin::message("[]---------------------------------------------[]", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
 	}).detach();
+
+	update::remote_version([](update::RemoteVersion remote) {
+		if(!remote.valid()) {
+			plugin::message("[Updater] Update check failed! Could not check if a update is available!", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
+			return;
+		}
+		if(remote > update::local_version()) {
+			plugin::message("There is an update available!", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
+			plugin::message("Update now to " + remote.string(false) + " ([url=" + remote.url + "]" + remote.url + "[/url])", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
+		} else if(remote == update::local_version()) {
+			plugin::message("Your version is up to date :)", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
+		} else if(remote < update::local_version()) {
+			plugin::message("You're using a prebuild!", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
+		}
+	});
+
 	return 0;
 }
 

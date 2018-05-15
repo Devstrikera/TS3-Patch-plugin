@@ -1,9 +1,18 @@
-#include <iostream>
+#include "include/wrapper/ParameterParser.h"
 #include "include/hook/Hook.h"
-#include <in6addr.h>
+#include <iostream>
 #include <cassert>
 
+#ifdef WIN32
+	#include <in6addr.h>
+#else
+    #include <arpa/inet.h>
+#include <netinet/in.h>
+
+#endif
+
 using namespace hook;
+using namespace wrapper;
 using namespace std;
 
 std::unique_ptr<wrapper::StaticLicense> thread_local Hook::costume_license;
@@ -30,7 +39,6 @@ std::unique_ptr<mem::CodeFragment> Hook::make_jmp(uintptr_t address, uintptr_t j
 	return mem::replace(address, buffer, 12, length);
 }
 
-
 int Hook::getaddrinfo(const char *name, const char *service, const addrinfo *req, addrinfo **pai) {
 	printf("Getting address info: %s\n", name);
 	printf(" req: %p\n", req);
@@ -49,8 +57,13 @@ int Hook::getaddrinfo(const char *name, const char *service, const addrinfo *req
 				auto addr = ((sockaddr_in6*) entry->ai_addr)->sin6_addr;
 				inet_ntop(AF_INET6, &addr, astring, INET6_ADDRSTRLEN);
 				cout << "Replacing " << astring << " to :::::" << endl;
+#ifdef WIN32
 				auto& buffer = ((sockaddr_in6*) entry->ai_addr)->sin6_addr.u;
 				memset(buffer.Byte, 0, 16);
+#else
+                auto& buffer = ((sockaddr_in6*) entry->ai_addr)->sin6_addr.__in6_u;
+                memset(buffer.__u6_addr8, 0, 16);
+#endif
 			} else if(entry->ai_addr->sa_family == AF_INET) {
 				cout << "Replacing " << inet_ntoa(((sockaddr_in *) entry->ai_addr)->sin_addr) << " to 0.0.0.0" << endl;
 				((sockaddr_in *) entry->ai_addr)->sin_addr.s_addr = 0;
@@ -62,18 +75,24 @@ int Hook::getaddrinfo(const char *name, const char *service, const addrinfo *req
 }
 
 uintptr_t Hook::getPublicKeyPtr() {
-	auto result = (uintptr_t) wrapper::static_license_root;
+	auto result = (uintptr_t)
+
+#ifdef WIN32
+            wrapper::static_license_root;
+#else
+            &wrapper::static_license_root;
+#endif
 	cout << "Got license root key request!" << endl;
 	if(costume_license && costume_license_ptr > 0) {
 		cout << "Using costume license key! (" << costume_license_ptr << ")" << endl;
+#ifdef WIN32
 		result = costume_license_ptr;
+#else
+        result = (uintptr_t) &costume_license_ptr;
+#endif
 	} else {
 		cout << "Using the standart TeamSpeak 3 key!" << endl;
 	}
 
-#ifdef WIN32
 	return (uintptr_t)  result;
-#else
-	return (uintptr_t) &result;
-#endif
 }
