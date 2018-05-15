@@ -22,6 +22,9 @@ set(SHARED_HEADERS
 		include/wrapper/ParameterParser.h
 
 		include/base64.h
+        include/ini_reader.h
+
+        include/update/updater.h
 )
 
 set(SHARED_SOURCE
@@ -38,6 +41,8 @@ set(SHARED_SOURCE
 		src/wrapper/PacketParser.cpp
 		src/wrapper/License.cpp
 		src/base64.cpp
+
+        src/version/updater.cpp
 )
 
 include_directories(teamspeak)
@@ -73,15 +78,15 @@ else()
     SET(CMAKE_ASM_FLAGS "${CFLAGS} -x assembler-with-cpp")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -nostdinc++ -std=c++11 -nodefaultlibs")
 
-        set(LINUX_SHARED_SOURCE
-                src/hook/linux/linux_x64.cpp
-                src/hook/linux/jmp.S
-        )
+    set(LINUX_SHARED_SOURCE
+            src/hook/linux/linux_x64.cpp
+            src/hook/linux/jmp.S
+    )
 
     include_directories(/usr/local/include/libcxx)
 
     add_library(plugin SHARED ${SHARED_HEADERS} ${SHARED_SOURCE} ${LINUX_SHARED_SOURCE})
-    target_link_libraries(plugin c++ c++abi m c gcc_s gcc )
+    target_link_libraries(plugin curl c++abi m gcc_s gcc c++ c m stdc++)
 
     add_executable(MemoryTest test/linux/MemoryTest.cpp test/linux/jmp.S)
     target_link_libraries(MemoryTest plugin)

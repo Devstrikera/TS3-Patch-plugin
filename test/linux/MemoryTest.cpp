@@ -1,10 +1,14 @@
 #include <assert.h>
 #include <iostream>
 #include <cstring>
+#include <thread>
+#include "include/update/updater.h"
 #include "include/process/process.h"
 #include "include/process/pattern.h"
 
+using namespace update;
 using namespace std;
+using namespace std::chrono;
 const char* message = "Hello World. Message: XXX";
 
 void injectMe() {
@@ -40,6 +44,19 @@ int main() {
 //	auto address = mem::find_pattern(process, "Hello World. Message: ");
 //	assert((void*) address == (void*) message);
 
+	update::remote_version([](Version version) {
+        cout << "Remote version: " << endl;
+
+        cout << "Major: " << version.major << endl;
+        cout << "Minor: " << version.minor << endl;
+        cout << "Patch: " << version.patch << endl;
+        
+        cout << "Aditional: " << version.additional << endl;
+        cout << "Timestamp: " << duration_cast<seconds>(version.timestamp.time_since_epoch()).count() << endl;
+    });
+    this_thread::sleep_for(seconds(5));
+    return 0;
+	
 	__asm__("movq $0xFFFFF00F, %rax");
 	__asm__("jmp %rax");
 	__asm__("call %rax");
