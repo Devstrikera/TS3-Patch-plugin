@@ -130,8 +130,14 @@ const char* ts3plugin_name() {
 	return PLUGIN_NAME;
 }
 
+unique_ptr<char> static_version;
 const char* ts3plugin_version() {
-	return update::local_version().string().c_str();
+	if(!static_version) {
+		auto version = update::local_version().string();
+		static_version.reset((char*) malloc(version.length()));
+		memcpy(static_version.get(), version.data(), version.length());
+	}
+	return static_version.get();
 }
 
 int ts3plugin_apiVersion() {
