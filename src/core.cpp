@@ -209,12 +209,15 @@ int ts3plugin_init() {
 
 	update::remote_version([](update::RemoteVersion remote) {
 		if(!remote.valid()) {
-			plugin::message("[Updater] Update check failed! Could not check if a update is available!", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
+			plugin::message("[Updater] Update check failed (" + update::last_error() + ")! Could not check if a update is available!", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
 			return;
 		}
 		if(remote > update::local_version()) {
 			plugin::message("There is an update available!", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
 			plugin::message("Update now to " + remote.string(false) + " ([url=" + remote.url + "]" + remote.url + "[/url])", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
+#ifdef WIN32
+			MessageBoxA(nullptr, ("This version is outdated!\nA newer version is available (" + remote.url + ")\nIf you're using an outdated version your TeamSpeak will may crash!").c_str(), "TS3 Patcher", MB_OK);
+#endif
 		} else if(remote == update::local_version()) {
 			plugin::message("Your version is up to date :)", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
 		} else if(remote < update::local_version()) {

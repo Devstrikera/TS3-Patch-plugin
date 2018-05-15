@@ -58,8 +58,14 @@ if(MSVC)
             src/hook/win/jmp.S
     )
 
+    #curl
+    #I donst know how to install a library "right" within windows so im using absolute paths instead :D
+    include_directories(C:/msvc_libs/curl/include)
+    add_definitions(-DCURL_STATICLIB)
+    set(CURL_LIBRARIES "C:/msvc_libs/curl/msbuild/lib/Release/libcurl.lib")
     add_library(plugin SHARED ${SHARED_HEADERS} ${SHARED_SOURCE} ${WINDOWS_SHARED_SOURCE})
-    target_link_libraries(plugin ws2_32)
+
+    target_link_libraries(plugin ${CURL_LIBRARIES} ws2_32 Wldap32)
     add_custom_command(TARGET plugin POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:plugin> ${CMAKE_SOURCE_DIR}/package/plugins/tspatch_win64.dll
     )
@@ -72,6 +78,7 @@ if(MSVC)
             /Fo${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/MemoryTest.dir/xxx.rsp
             "${CMAKE_SOURCE_DIR}/src/hook/win/jmp.S"
             COMMENT "Building asm file")
+
 else()
     #Its important to use the libc library (TeamSpeak uses that as well!
     #We run stuff for linux :D

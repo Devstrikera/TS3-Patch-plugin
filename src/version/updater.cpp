@@ -3,7 +3,6 @@
 #include <mutex>
 #include <vector>
 #include <iostream>
-
 #include <curl/curl.h>
 #include <thread>
 
@@ -14,6 +13,22 @@ using namespace update;
 std::string Version::string(bool build) {
     return to_string(this->major) + '.' + to_string(this->minor) + '.' + to_string(this->patch) + this->additional + (build ? " [Build: " + to_string(duration_cast<seconds>(this->timestamp.time_since_epoch()).count()) + "]" : "");
 }
+
+#ifdef WIN32
+#include <ctime>
+#include <iomanip>
+#include <sstream>
+
+extern "C" char* strptime(const char* s, const char* f, struct tm* tm) {
+	std::istringstream input(s);
+	input.imbue(std::locale(setlocale(LC_ALL, nullptr)));
+	input >> std::get_time(tm, f);
+	if (input.fail()) {
+		return nullptr;
+	}
+	return (char*)(s + input.tellg());
+}
+#endif
 
 unique_ptr<Version> local_version{[]() -> Version* {
     const char* build_timestamp = __TIME__; //23:59:01
@@ -37,7 +52,7 @@ vector<std::function<void(RemoteVersion)>> remote_callbacks;
 unique_ptr<RemoteVersion> remote_version;
 string remote_fetch_error;
 
-std::string last_error() { return remote_fetch_error; }
+std::string update::last_error() { return remote_fetch_error; }
 
 struct VersionRequestLock {
     ~VersionRequestLock() {
@@ -82,7 +97,15 @@ void update::remote_version(const std::function<void(RemoteVersion)>& callback){
 
                 {
                     unique_lock<mutex> l(remote_lock);
-                    auto section = "linux_64";
+#ifdef WIN32
+	#ifdef ENV32
+					auto section = "windows_32";
+	#else
+					auto section = "windows_64";
+	#endif
+#else
+					auto section = "linux_64";
+#endif
                     ::remote_version.reset(new RemoteVersion{
 							(int) reader.GetInteger(section, "major", -1),
 							(int) reader.GetInteger(section, "minor", -1),
@@ -122,20 +145,21 @@ bool request_version_info(string& error) {
     }
 
     string response;
+    CURLcode code = CURLE_OK;
     unique_ptr<CURL, void(*)(void*)> handle(curl_easy_init(), ::curl_easy_cleanup);
 
     if(!handle) ERROR("Could not spawn curl handle");
-    if(curl_easy_setopt(handle.get(), CURLOPT_URL, "https://repo.teaspeak.de/ts3_patch.info")) ERROR("Could not set url");
-    if(curl_easy_setopt(handle.get(), CURLOPT_WRITEFUNCTION, &local_write_callback)) ERROR("Could not set write callback");
-    if(curl_easy_setopt(handle.get(), CURLOPT_WRITEDATA, &response)) ERROR("Could not set write buffer");
-    if(curl_easy_setopt(handle.get(), CURLOPT_NOPROGRESS, 1l)) ERROR("Could not disable no progress");
-    if(curl_easy_setopt(handle.get(), CURLOPT_TIMEOUT_MS, 5000l)) ERROR("Could not set timeout");
-    if(curl_easy_setopt(handle.get(), CURLOPT_SSL_VERIFYPEER, 0L)) ERROR("Could not disable ssl verify peer");
-    if(curl_easy_perform(handle.get())) ERROR("Could not perform curl request!");
+    if(code = curl_easy_setopt(handle.get(), CURLOPT_URL, "http://plugin.teaspeak.de/ts3_patch.info")) ERROR("Could not set url (" + string(curl_easy_strerror(code)) + ")");
+    if(code = curl_easy_setopt(handle.get(), CURLOPT_WRITEFUNCTION, &local_write_callback)) ERROR("Could not set write callback (" + string(curl_easy_strerror(code)) + ")");
+    if(code = curl_easy_setopt(handle.get(), CURLOPT_WRITEDATA, &response)) ERROR("Could not set write buffer (" + string(curl_easy_strerror(code)) + ")");
+    if(code = curl_easy_setopt(handle.get(), CURLOPT_NOPROGRESS, 1l)) ERROR("Could not disable no progress (" + string(curl_easy_strerror(code)) + ")");
+    if(code = curl_easy_setopt(handle.get(), CURLOPT_TIMEOUT_MS, 5000l)) ERROR("Could not set timeout (" + string(curl_easy_strerror(code)) + ")");
+    if(code = curl_easy_setopt(handle.get(), CURLOPT_SSL_VERIFYPEER, 0L)) ERROR("Could not disable ssl verify peer (" + string(curl_easy_strerror(code)) + ")");
+    if(code = curl_easy_perform(handle.get())) ERROR("Could not perform curl request! (" + string(curl_easy_strerror(code)) + ")");
 
     long response_code;
-    if(curl_easy_getinfo(handle.get(), CURLINFO_RESPONSE_CODE, &response_code)) ERROR("Could not get response code");
-    if(response_code != 200L) ERROR("Invalid response code (" + to_string(response_code) + ")");
+    if(code = curl_easy_getinfo(handle.get(), CURLINFO_RESPONSE_CODE, &response_code)) ERROR("Could not get response code (" + string(curl_easy_strerror(code)) + ")");
+    if(response_code != 200L) ERROR("Invalid response code (" + to_string(response_code) + ") (" + string(curl_easy_strerror(code)) + ")");
 
     error = response;
     return true;
