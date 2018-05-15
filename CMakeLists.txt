@@ -87,6 +87,7 @@ else()
 
     add_library(plugin SHARED ${SHARED_HEADERS} ${SHARED_SOURCE} ${LINUX_SHARED_SOURCE})
     target_link_libraries(plugin curl c++abi m gcc_s gcc c++ c m stdc++)
+    add_custom_command(TARGET plugin COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:plugin> ${CMAKE_SOURCE_DIR}/package/plugins/tspatch_linux_64.so)
 
     add_executable(MemoryTest test/linux/MemoryTest.cpp test/linux/jmp.S)
     target_link_libraries(MemoryTest plugin)
