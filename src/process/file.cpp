@@ -51,6 +51,6 @@
 	}
 
 	bool file::mkdirs(const std::string& path) {
-		return CreateDirectory(path.c_str(), nullptr) && file::exists(path);
+		return file::exists(path) || CreateDirectory(path.c_str(), nullptr) && file::exists(path);
 	}
 #endif
