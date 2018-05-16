@@ -2,7 +2,7 @@
 Welcome to the official TeamSpeak 3 patcher github repository
 
 ## What is this?
-TeamSpeak 3 patcher is a TeamSpeak 3 plugin which allows you to disable the TeamSpeak 3 blacklist and allows you to join 3.1 cracked servers!
+TeamSpeak 3 patcher is a TeamSpeak 3 plugin which allows you to disable the TeamSpeak 3 blacklist and allows you to join 3.1 TeaSpeak servers!
 
 ## Platform compatibility
 
