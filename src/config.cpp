@@ -4,13 +4,14 @@
 #include <include/config.h>
 #include <iostream>
 #include <include/process/file.h>
+#include <include/core.h>
 
 using namespace std;
 using namespace plugin;
 
 unique_ptr<Configuration> plugin::configuration;
 
-#define CONFIG_NAME "ts_patch.config"
+#define CONFIG_NAME "config.cfg"
 #define O(stream, exp) 					\
 exp; 									\
 if(!stream) { 							\
@@ -18,11 +19,18 @@ if(!stream) { 							\
 	return false; 						\
 } 										\
 
+std::string plugin::config_folder() {
+	char buffer[512];
+	plugin::api::functions().getPluginPath(buffer, 512, plugin::id().c_str());
+	return string(buffer) + "ts_patch/";
+}
+
 bool config::parse(std::string& error) {
 	configuration.reset(new Configuration{});
-	if(!file::exists(CONFIG_NAME)) return true;
+	cout << "Loading config at " << config_folder() << CONFIG_NAME << endl;
+	if(!file::exists(config_folder() + CONFIG_NAME)) return true;
 
-	ifstream in(CONFIG_NAME);
+	ifstream in(config_folder() + CONFIG_NAME);
 	auto cfg = configuration.get();
 
 	int version;
@@ -39,7 +47,11 @@ bool config::parse(std::string& error) {
 }
 
 bool config::save(std::string& error) {
-	ofstream out(CONFIG_NAME);
+	if(!file::mkdirs(config_folder())) {
+		error = "could not create directories (" + config_folder() + ")";
+		return false;
+	}
+	ofstream out(config_folder() + CONFIG_NAME);
 
 	auto cfg = configuration.get();
 	O(out, out << 1 << " ");

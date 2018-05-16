@@ -42,15 +42,15 @@ namespace plugin {
 		return pluginId;
 	}
 
-	const TS3Functions& functions() {
-		return ::functions;
-	}
-
 	hook::Hook* hook() {
 		return instance_hook;
 	}
 
 	namespace api {
+		const TS3Functions& functions() {
+			return ::functions;
+		}
+
 		std::tuple<int, int, int> version_mmp() {
 			std::tuple<int, int, int> response;
 
@@ -87,26 +87,26 @@ namespace plugin {
 
 		std::string version() {
 			char* result = nullptr;
-			::plugin::functions().getClientLibVersion(&result);
+			functions().getClientLibVersion(&result);
 			string res = result;
-			::plugin::functions().freeMemory(result);
+			functions().freeMemory(result);
 			return res;
 		}
 
 
 		uint64 versionNumber() {
 			uint64 number;
-			::plugin::functions().getClientLibVersionNumber(&number);
+			functions().getClientLibVersionNumber(&number);
 			return number;
 		}
 	}
 
 	void message(const std::string& message, PluginMessageTarget target, bool chat) {
-		auto funcs = functions();
+		auto funcs = api::functions();
 		if(!messagesInitialized)
 			buffered.push_back({message, target});
-		else if(functions().printMessage)
-			functions().printMessage(funcs.getCurrentServerConnectionHandlerID(), message.c_str(), target);
+		else if(api::functions().printMessage)
+			api::functions().printMessage(funcs.getCurrentServerConnectionHandlerID(), message.c_str(), target);
 		if(chat)
 			cout << message << endl;
 	}

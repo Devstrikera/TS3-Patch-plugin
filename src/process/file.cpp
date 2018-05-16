@@ -49,4 +49,8 @@
 	bool file::exists(const std::string& path) {
 		return GetFileAttributes(path.c_str()) != 0xFFFFFFFF;
 	}
+
+	bool file::mkdirs(const std::string& path) {
+		return CreateDirectory(path.c_str(), nullptr) && file::exists(path);
+	}
 #endif
