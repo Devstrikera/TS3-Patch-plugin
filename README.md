@@ -11,7 +11,7 @@ Blacklist patch test: `ts.teaspeak.de:9987` (This server should be blacklisted)
 (**Attention**: This plugins does not clear the cache! Once TeamSpeak cached the blacklist status you have to wait some time until it tries to refresh it!)
 
 License patch test: `ts.teaspeak.de:9988` (This server should have a fake 3.1 Annual Activation License (with 120 slots))
-(**Attention**: This server isnt up at any time (its also my private test server! Later the main server will be used for this test))
+(**Attention**: This server isn't up at any time (its also my private test server! Later the main server will be used for this test))
 ## Platform compatibility
 
 | Client version | Linux x64 | Windows x64 | Mac OS<sup id="a1">[1](#Mac-OS)</sup> (x64) |
