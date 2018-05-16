@@ -171,7 +171,7 @@ int ts3plugin_init() {
 	if(get<0>(version) < 2) {
 		cerr << "Invalid clientlib version!" << endl;
 		plugin::message("Invalid clientlib version!", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
-		plugin::message("Dont initialize TS Patch", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
+		plugin::message("Don't initialize TS Patch", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
 		return 1;
 	}
 	cout << "Client Version: " << plugin::api::version() << " (Major: " << get<0>(version) << " Minor: " << get<1>(version) << " Patch: " << get<2>(version) << ")" << endl;
@@ -180,20 +180,20 @@ int ts3plugin_init() {
 	string error;
 	if(!plugin::config::parse(error)) {
 		QMessageBox::critical(nullptr, "TS3 Patch", "Failed to parse TS3 patch config!\nCould not start plugin!");
-		plugin::message("Dont initialize TS Patch (invalid config)", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
+		plugin::message("Don't initialize TS Patch (invalid config)", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
 		plugin::message("Error: " + error, PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
 	}
 
 	thread([](){
 		plugin::message("Loading hook (async)", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
-		std::string error;
+		std::string hook_error;
 #ifdef WIN32
 		instance_hook = new hook::HookWindows64();
 #else
 		instance_hook = new hook::Linux64Hook();
 #endif
 
-		auto flag = instance_hook->available(error);
+		auto flag = instance_hook->available(hook_error);
 		if(!flag) {
 			plugin::message("[]---------------------------------------------[]", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
 			plugin::message("      Could not inject! (No hook available)", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
@@ -201,20 +201,20 @@ int ts3plugin_init() {
 			return;
 		}
 
-		flag = instance_hook->initializeHook(error);
+		flag = instance_hook->initializeHook(hook_error);
 		if(!flag) {
 			plugin::message("[]---------------------------------------------[]", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
 			plugin::message("Hook " + instance_hook->name() + " could not be initialized", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
-			plugin::message("Reason: " + error, PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
+			plugin::message("Reason: " + hook_error, PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
 			plugin::message("[]---------------------------------------------[]", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
 			return;
 		}
 
-		flag = instance_hook->hook(error);
+		flag = instance_hook->hook(hook_error);
 		if(!flag) {
 			plugin::message("[]---------------------------------------------[]", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
 			plugin::message("Hook " + instance_hook->name() + " could not injected", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
-			plugin::message("Reason: " + error, PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
+			plugin::message("Reason: " + hook_error, PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
 			plugin::message("[]---------------------------------------------[]", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
 			return;
 		}
@@ -252,7 +252,18 @@ int ts3plugin_init() {
 	return 0;
 }
 
-void ts3plugin_shutdown() { }
+void ts3plugin_shutdown() {
+	string error;
+	if(instance_hook) {
+		if(!instance_hook->unhook(error)) {
+			plugin::message("Failed to unhook the TeamSpeak 3 client on unload! This could cause fatal crashes!", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
+			runOnThread(QApplication::instance()->thread(), []{
+				QMessageBox::critical(nullptr, QString::fromStdString(plugin::name()), QString::fromStdString("Failed to unhook the TeamSpeak 3 client on unload!\nThis could cause fatal crashes!"));
+			});
+		} else
+			plugin::message("Successfully unloaded!", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
+	}
+}
 
 
 int ts3plugin_offersConfigure() {
