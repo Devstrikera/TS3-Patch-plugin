@@ -10,7 +10,7 @@ namespace plugin {
 		} blacklist;
 
 		struct {
-			bool enabled = false;
+			bool enabled = true;
 		} license;
 
 		struct {
@@ -20,6 +20,7 @@ namespace plugin {
 	};
 
 	extern std::unique_ptr<Configuration> configuration;
+	extern std::string config_folder();
 
 	namespace config {
 		bool parse(std::string&);
