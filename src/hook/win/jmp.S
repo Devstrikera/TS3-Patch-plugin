@@ -99,11 +99,11 @@ _hook_windows_x64_injected_317:
 
 _hook_windows_x64_injected:
     pushaq
-    sub rsp, 8h
+    sub rsp, 20h
     lea rax, _hook_windows_x64_injected_target
     mov rax, [rax]
     call rax
-    add rsp, 8h
+    add rsp, 20h
     popaq
 
     ;We have to jump back again :)

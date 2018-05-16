@@ -1,14 +1,20 @@
 #include "include/wrapper/ParameterParser.h"
 #include "include/hook/Hook.h"
+#include "include/gui/helper.h"
+#include <QApplication>
+#include <QMessageBox>
 #include <iostream>
 #include <cassert>
+#include <include/config.h>
+#include <include/base64.h>
+#include <include/core.h>
+#include <thread>
 
 #ifdef WIN32
 	#include <in6addr.h>
 #else
     #include <arpa/inet.h>
-#include <netinet/in.h>
-
+	#include <netinet/in.h>
 #endif
 
 using namespace hook;
@@ -40,6 +46,11 @@ std::unique_ptr<mem::CodeFragment> Hook::make_jmp(uintptr_t address, uintptr_t j
 }
 
 int Hook::getaddrinfo(const char *name, const char *service, const addrinfo *req, addrinfo **pai) {
+	if(!plugin::configuration->blacklist.enabled) {
+		plugin::message("[color=red]Blacklist patch isn't enabled.[/color]", PLUGIN_MESSAGE_TARGET_SERVER);
+		plugin::message("[color=red]Allowing blacklist check![/color]", PLUGIN_MESSAGE_TARGET_SERVER);
+		return ::getaddrinfo(name, service, req, pai);
+	}
 	printf("Getting address info: %s\n", name);
 	printf(" req: %p\n", req);
 	printf(" pai: %p\n", pai);
@@ -91,8 +102,38 @@ uintptr_t Hook::getPublicKeyPtr() {
         result = (uintptr_t) &costume_license_ptr;
 #endif
 	} else {
-		cout << "Using the standart TeamSpeak 3 key!" << endl;
+		cout << "Using the standard TeamSpeak 3 key!" << endl;
 	}
 
 	return (uintptr_t)  result;
+}
+
+void Hook::injected(wrapper::ParameterParser* parser) {
+	ssize_t index = 0;
+	cout << "proof: " << parser->getParamValue("proof", index) << " -> " << index << " error: " << parser->getLastError() << endl;
+	cout << "l: " << parser->getParamValue("l", index) << " -> " << index << " error: " << parser->getLastError() << endl;
+	cout << "root: " << parser->getParamValue("root", index) << " -> " << index << " error: " << parser->getLastError() << endl;
+
+	costume_license_ptr = 0;
+	costume_license.reset();
+	if(parser->hasParam("root")) {
+		if(!plugin::configuration->license.enabled) {
+			cout << "Costume license disabled but wants to connect to a costume server!" << endl;
+			QApplication::instance();
+			runOnThread(QApplication::instance()->thread(), []{
+				QMessageBox::critical(nullptr, QString::fromStdString(plugin::name()), "Could not connect to target server!\nThe target server is using a costume license and requires this plugin!\nEnable the feature TeaSpeak license within the plugin config.");
+				return;
+			});
+		} else {
+			cout << "Contained a costume root key" << endl;
+			auto costume_root = parser->getParamValue("root", index);
+			cout << "Root key: " << costume_root << endl;
+			auto root = base64::decode(costume_root);
+			cout << "Length: " << root.length() << endl;
+
+			costume_license.reset(new wrapper::StaticLicense{});
+			memcpy(costume_license->publicLicense, root.data(), 32);
+			costume_license_ptr = (uintptr_t) costume_license.get();
+		}
+	}
 }

@@ -40,7 +40,7 @@ unique_ptr<Version> local_version{[]() -> Version* {
     if(!strptime(build_date, "%b %d %Y", &date)) cerr << "Could not parse build date!" << endl;
 
     system_clock::time_point time = system_clock::time_point() + seconds(mktime(&date)) + hours(timestamp.tm_hour) + minutes(timestamp.tm_min) + seconds(timestamp.tm_sec);
-    return new Version{0, 1, 1, "", time};
+    return new Version{0, 1, 2, "", time};
 }()};
 Version update::local_version() {
     return *::local_version;

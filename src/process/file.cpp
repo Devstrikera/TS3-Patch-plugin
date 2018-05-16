@@ -14,6 +14,7 @@
 	}
 #else
 	#include <Windows.h>
+	#include <iostream>
 	#include <vector>
 	#include <memory>
 	#include <type_traits>
@@ -42,5 +43,10 @@
 									 FILE_NAME_NORMALIZED );
 
 		return std::wstring( buffer.begin(), buffer.end() - 1 );
+	}
+
+
+	bool file::exists(const std::string& path) {
+		return GetFileAttributes(path.c_str()) != 0xFFFFFFFF;
 	}
 #endif

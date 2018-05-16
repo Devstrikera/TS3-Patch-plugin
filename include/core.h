@@ -3,12 +3,14 @@
 #include <string>
 #include <cstddef>
 #include <tuple>
-#include "ts3_functions.h"
+#include <teamspeak/plugin_definitions.h>
+#include <teamspeak/ts3_functions.h>
 
 namespace hook {
 	class Hook;
 }
 namespace plugin {
+	extern std::string name();
 	extern std::string id();
 	extern void message(std::string, PluginMessageTarget);
 	extern hook::Hook* hook();

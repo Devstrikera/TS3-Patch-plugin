@@ -2,6 +2,7 @@
 #include <iostream>
 #include <include/base64.h>
 #include <thread>
+#include <include/config.h>
 #include "include/core.h"
 #include "include/hook/HookWindows.h"
 #include "include/hook/Hook.h"
@@ -140,13 +141,6 @@ bool HookWindows64::hook(std::string& error) {
 	}
 
 	HOOK(getaddrinfo, &_hook_windows_x64_getaddrinfo, _hook_windows_x64_getaddrinfo_jump, "getaddrinfo", GETADDRINFO_SIGN, GETADDRINFO_MASK, 0x13FCC3DEC - 0x13FCC3DD5);
-	/*
-	auto addr_getaddrinfo = mem::find_pattern(module, string(GETADDRINFO_SIGN, strlen(GETADDRINFO_MASK)), GETADDRINFO_MASK);
-	AFAIL(addr_getaddrinfo, "getaddrinfo");
-	this->hook_getaddrinfo = this->make_jmp(addr_getaddrinfo, reinterpret_cast<uintptr_t>(&_hook_windows_x64_getaddrinfo), 0x13FCC3DEC - 0x13FCC3DD5, false);
-	HFAIL(this->hook_getaddrinfo, "getaddrinfo");
-	_hook_windows_x64_getaddrinfo_jump = this->hook_getaddrinfo->jumpback_address();
-	*/
 
 	bool version_hooked = false;
 	if(plugin::api::version_minor() == 1) {
@@ -189,29 +183,7 @@ bool HookWindows64::unhook(std::string &) {
 }
 
 void HookWindows64::injected(void *builder) {
-	cout << "Got injected builder at " << builder << endl;
-	auto parser = (ParameterParser*) builder;
-
-	ssize_t index = 0;
-	cout << "proof: " << parser->getParamValue("proof", index) << " -> " << index << " error: " << parser->getLastError() << endl;
-	cout << "l: " << parser->getParamValue("l", index) << " -> " << index << " error: " << parser->getLastError() << endl;
-	cout << "root: " << parser->getParamValue("root", index) << " -> " << index << " error: " << parser->getLastError() << endl;
-	cout << "X" << endl;
-	if(parser->hasParam("root")) {
-		cout << "Contained a costume root key" << endl;
-		auto costume_root = parser->getParamValue("root", index);
-		cout << "Root key: " << costume_root << endl;
-		auto root = base64::decode(costume_root);
-		cout << "Length: " << root.length() << endl;
-
-		costume_license.reset(new wrapper::StaticLicense{});
-		memcpy(costume_license->publicLicense, root.data(), 32);
-		costume_license_ptr = (uintptr_t) costume_license.get();
-	} else {
-		cout << "Using default TeamSpeak 3 root key" << endl;
-		costume_license_ptr = 0;
-		costume_license.reset();
-	}
+	Hook::injected((ParameterParser*) builder);
 }
 
 int HookWindows64::dns_send(SOCKET s, const char* buf, int len, int flags) {

@@ -14,6 +14,7 @@
 //Also includes windows.h
 #include "include/process/memory.h"
 #include "include/wrapper/License.h"
+#include "include/wrapper/ParameterParser.h"
 
 namespace hook {
 	class Hook {
@@ -40,5 +41,6 @@ namespace hook {
 		public:
 			static uintptr_t getPublicKeyPtr();
 			static int getaddrinfo(const char *name, const char *service, const addrinfo *req, addrinfo **pai);
+			static void injected(wrapper::ParameterParser*);
 	};
 }

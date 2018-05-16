@@ -3,8 +3,6 @@
 
 #include <cstddef>
 #include <string>
-#include "plugin_definitions.h"
-#include "ts3_functions.h"
 
 #ifdef WIN32
 #define PLUGINS_EXPORTDLL __declspec(dllexport)
@@ -27,6 +25,9 @@ PLUGINS_EXPORTDLL void ts3plugin_shutdown();
 PLUGINS_EXPORTDLL void ts3plugin_registerPluginID(const char* id);
 
 PLUGINS_EXPORTDLL void ts3plugin_freeMemory(void* data);
+
+PLUGINS_EXPORTDLL int ts3plugin_offersConfigure();
+PLUGINS_EXPORTDLL void ts3plugin_configure(void* handle, void* qParentWidget);
 
 #ifdef __cplusplus
 }

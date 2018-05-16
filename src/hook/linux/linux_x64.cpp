@@ -78,28 +78,6 @@ bool Linux64Hook::unhook(std::string& error) {
 }
 
 ssize_t Linux64Hook::injected(void* builder) {
-	cout << "Got injected method! Builder at: " << builder << endl;
-
-	auto parser = (wrapper::ParameterParser*) builder;
-	ssize_t index;
-	cout << "Ot: " << parser->getParamValue("ot", index) << " | " << parser->getParamValueID("ot", index) << endl;
-	cout << "proof: " << parser->getParamValue("proof", index) << " | " << parser->getParamValueID("ot", index) << " | " << parser->getLastError() << endl;
-	cout << "has root: " << parser->hasParam("root") << " | Has dummy: " << parser->hasParam("dummy") << endl;
-	cout << "root: " << parser->getParamValue("root", index) << "|" << parser->getLastError() << endl;
-
-	if(parser->hasParam("root")) {
-		auto costume_root = parser->getParamValue("root", index);
-		cout << "Root key: " << costume_root << endl;
-		auto root = base64::decode(costume_root);
-		cout << "Length: " << root.length() << endl;
-
-		costume_license.reset(new wrapper::StaticLicense{});
-		memcpy(costume_license->publicLicense, root.data(), 32);
-		costume_license_ptr = (uintptr_t) costume_license.get();
-	} else {
-		costume_license_ptr = 0;
-		costume_license.reset();
-	}
-
-	return parser->getParamValueID("ot", index); //Just for TeamSpeak :)
+	Hook::injected((ParameterParser*) builder);
+	return ((ParameterParser*) builder)->getParamValueID("ot", index); //Just for TeamSpeak :)
 }

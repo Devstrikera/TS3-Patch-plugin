@@ -1,10 +1,15 @@
 #include "include/hook/Hook.h"
 #include "include/core.h"
 #include "include/plugin.h"
+#include "include/config.h"
 #include "include/update/updater.h"
 #include <iostream>
 #include <thread>
 #include <deque>
+#include <include/config.h>
+#include "include/gui/PluginConfig.h"
+#include <QMessageBox>
+#include "include/gui/helper.h"
 
 #define PLUGIN_NAME "TS Patch"
 
@@ -28,6 +33,10 @@ namespace plugin {
 	};
 	deque<QueuedMessage> buffered;
 	bool messagesInitialized = false;
+
+	std::string name() {
+		return PLUGIN_NAME;
+	}
 
 	std::string id() {
 		return pluginId;
@@ -167,9 +176,16 @@ int ts3plugin_init() {
 	}
 	cout << "Client Version: " << plugin::api::version() << " (Major: " << get<0>(version) << " Minor: " << get<1>(version) << " Patch: " << get<2>(version) << ")" << endl;
 	cout << "Plugin Version: " << update::local_version().string() << " (Major: " << update::local_version().major << " Minor: " << update::local_version().minor << " Patch: " << update::local_version().patch << ")" << endl;
-	plugin::message("Loading hook (async)", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
+
+	string error;
+	if(!plugin::config::parse(error)) {
+		QMessageBox::critical(nullptr, "TS3 Patch", "Failed to parse TS3 patch config!\nCould not start plugin!");
+		plugin::message("Dont initialize TS Patch (invalid config)", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
+		plugin::message("Error: " + error, PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
+	}
 
 	thread([](){
+		plugin::message("Loading hook (async)", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
 		std::string error;
 #ifdef WIN32
 		instance_hook = new hook::HookWindows64();
@@ -221,9 +237,11 @@ int ts3plugin_init() {
 		if(remote > update::local_version()) {
 			plugin::message("There is an update available!", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
 			plugin::message("Update now to " + remote.string(false) + " ([url=" + remote.url + "]" + remote.url + "[/url])", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
-#ifdef WIN32
-			MessageBoxA(nullptr, ("This version is outdated!\nA newer version is available (" + remote.url + ")\nIf you're using an outdated version your TeamSpeak will may crash!").c_str(), "TS3 Patcher", MB_OK);
-#endif
+			if(plugin::configuration->update.notify_popup) {
+				runOnThread(QApplication::instance()->thread(), [remote]{
+					QMessageBox::warning(nullptr, QString::fromStdString(plugin::name()), QString::fromStdString("This version is outdated!\nA newer version is available (" + remote.url + ")\nIf you're using an outdated version your TeamSpeak will may crash!"));
+				});
+			}
 		} else if(remote == update::local_version()) {
 			plugin::message("Your version is up to date :)", PluginMessageTarget::PLUGIN_MESSAGE_TARGET_SERVER);
 		} else if(remote < update::local_version()) {
@@ -235,3 +253,12 @@ int ts3plugin_init() {
 }
 
 void ts3plugin_shutdown() { }
+
+
+int ts3plugin_offersConfigure() {
+	return PLUGIN_OFFERS_CONFIGURE_QT_THREAD;
+}
+
+void ts3plugin_configure(void* handle, void* qParentWidget) {
+	gui::initialize(qParentWidget);
+}

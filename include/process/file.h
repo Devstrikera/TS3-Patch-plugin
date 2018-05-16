@@ -2,5 +2,6 @@
 
 #include <string>
 namespace file {
-	std::string resolveSymbolicLink(const std::string&);
+	extern std::string resolveSymbolicLink(const std::string&);
+	extern bool exists(const std::string&);
 }
