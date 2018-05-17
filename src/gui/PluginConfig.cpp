@@ -29,6 +29,12 @@ void gui::initialize(void* qParentWidget) {
 	}
 }
 
+void gui::finalize() {
+	if(ui_config)
+		ui_config->close();
+	ui_config.release(); //Object will be destroyed automatically by QT
+}
+
 PluginConfig::PluginConfig(QWidget *owner) : QDialog(owner) {
 	ui.setupUi(this);
 

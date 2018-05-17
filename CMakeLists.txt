@@ -29,6 +29,7 @@ set(SHARED_HEADERS
 
         include/gui/helper.h
         include/gui/PluginConfig.h
+        include/unique_loader.h
 )
 
 set(SHARED_SOURCE
@@ -51,8 +52,8 @@ set(SHARED_SOURCE
         src/version/updater.cpp
 
         src/gui/PluginConfig.cpp
+        src/unique_loader.cpp
 )
-#include_directories(teamspeak)
 
 #Qt wrap stuff
 set(QT_FILES_UI ui/pluginconfig.ui)

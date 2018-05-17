@@ -35,4 +35,5 @@ namespace gui {
 	};
 
 	extern void initialize(void *qParentWidget);
+	extern void finalize();
 }

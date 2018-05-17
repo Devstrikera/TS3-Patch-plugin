@@ -122,7 +122,7 @@ Sig: \x48\x89\xBC\x24\x00\x00\x00\x00\x4C\x8D\x44\x24\x00\x48\x8B\x15\x00\x00\x0
 #define STATICLICENSE_2_SIGN_316 "\x48\x89\xBC\x24\x00\x00\x00\x00\x4C\x8D\x44\x24\x00\x48\x8B\x15\x00\x00\x00\x00\x48\x8B\x9C\x24\x00\x00\x00\x00"
 #define STATICLICENSE_2_MASK_316 "xxxx????xxxx?xxx????xxxx????"
 
-#define HOOK(varname, target_jump, target_bjump, publicname, sign, pattern, size) 											\
+#define HOOK(varname, target_jump, target_bjump, publicname, sign, pattern, size) 										\
 auto addr_ ##varname = mem::find_pattern(module, string(sign, strlen(pattern)), pattern); 								\
 AFAIL(addr_ ##varname, publicname); 																					\
 this->hook_ ##varname = this->make_jmp(addr_ ##varname, reinterpret_cast<uintptr_t>(target_jump), size, false); 		\
@@ -178,8 +178,20 @@ bool HookWindows64::hook(std::string& error) {
 	return true;
 }
 
-bool HookWindows64::unhook(std::string &) {
-	return false;
+bool HookWindows64::unhook(std::string& error) {
+	if(this->hook_injected && !mem::rollback(this->hook_injected)) error += string(error.empty() ? "" : " | ") + "could not reset inject hook";
+	this->hook_injected.reset();
+	
+	if(this->hook_getlicenseroot_1 && !mem::rollback(this->hook_getlicenseroot_1)) error += string(error.empty() ? "" : " | ") + "could not reset license hook (1)";
+	this->hook_getlicenseroot_1.reset();
+	
+	if(this->hook_getlicenseroot_2 && !mem::rollback(this->hook_getlicenseroot_2)) error += string(error.empty() ? "" : " | ") + "could not reset license hook (2)";
+	this->hook_getlicenseroot_2.reset();
+
+	if(this->hook_getaddrinfo && !mem::rollback(this->hook_getaddrinfo)) error += string(error.empty() ? "" : " | ") + "could not reset address hook";
+	this->hook_getaddrinfo.reset();
+	
+	return error.empty();
 }
 
 void HookWindows64::injected(void *builder) {
