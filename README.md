@@ -1,22 +1,29 @@
-# TeamSpeak 3 patcher
-Welcome to the TeamSpeak 3 patcher github repository
+# Attention:  
+The TeaConnect project is currently under review.The Old TS3 Patch Plugin will support
+the ver
 
-## What is this?
-TeamSpeak 3 patcher is a TeamSpeak 3 plugin which allows you to disable the TeamSpeak 3 blacklist and allows you to join 3.1 TeaSpeak servers!
+## What is TS3-Patch-plugin ? 
+TS3-Patch-plugin is a TeamSpeak 3 client addon which helps you to join TeaSpeak servers even if they are blacklisted! 
+ 
+## What is TeaConnect ? 
+TeaConnect is a TeamSpeak 3 client addon which helps you to join new TeaSpeak servers even if they are blacklisted!! 
+ 
+## TeaConnect Platform compatibility  
 
-## How can i test it?
-Well i don't know if everybody of you knows a grey/blacklisted server, or a patcher 3.1 server so I provide a small test server:
+| Client version | Linux x64 | Windows x64 | Mac OS<sup id="a1">[1](#Mac-OS)</sup> (x64) | 
+| --- | --- | --- | --- | 
+| 3.2.2  | :heavy_check_mark: | :heavy_check_mark: | :heavy_multiplication_x: | 
+| 3.2.1  | :heavy_check_mark: | :heavy_check_mark: | :heavy_multiplication_x: | 
+| 3.2.0  | :heavy_check_mark: | :heavy_check_mark: | :heavy_multiplication_x: | 
+| 3.1.10 | :heavy_check_mark: | :heavy_check_mark: | :heavy_multiplication_x: | 
+| 3.1.9  | :heavy_check_mark: | :heavy_check_mark: | :heavy_multiplication_x: | 
+| 3.1.8  | :heavy_multiplication_x: (need test) | :heavy_check_mark: | :heavy_multiplication_x: | 
+| 3.1.7  | :heavy_multiplication_x: (need test) | :heavy_check_mark: | :heavy_multiplication_x: | 
+| 3.1.6  | :heavy_multiplication_x: (need test) | :heavy_check_mark: | :heavy_multiplication_x: | 
+ 
+TS3-Patch-plugin
 
-Blacklist patch test: `ts.teaspeak.de:9987` (This server should be blacklisted)  
-**Attention**:  
-This plugins does not clear the cache!  
-Once TeamSpeak cached the blacklist status you have to wait some time until it tries to refresh it!  
-
-License patch test: `ts.teaspeak.de:9988` (This server should have a fake 3.1 Annual Activation License (with 120 slots))  
-**Attention**:  
-This server isn't up at any time (its also my private test server! Later the main server will be used for this test)  
-
-## Platform compatibility
+## TS3-Patch-Plugin Platform compatibility
 
 | Client version | Linux x64 | Windows x64 | Mac OS<sup id="a1">[1](#Mac-OS)</sup> (x64) |
 | --- | --- | --- | --- |
@@ -25,6 +32,3 @@ This server isn't up at any time (its also my private test server! Later the mai
 | 3.1.7 | :heavy_multiplication_x: | :heavy_check_mark: | :heavy_multiplication_x: |
 | 3.1.6 | :heavy_multiplication_x: | :heavy_check_mark: | :heavy_multiplication_x: |
 
-#### Footnotes:
-##### 1
-I'll try my best, but i don't have any experience with mac os
